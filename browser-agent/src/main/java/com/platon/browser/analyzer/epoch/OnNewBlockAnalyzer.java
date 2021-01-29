@@ -1,5 +1,7 @@
 package com.platon.browser.analyzer.epoch;
 
+import com.platon.browser.analyzer.PPOSAnalyzerProxy;
+import com.platon.browser.config.PPOSAnalyzerConfig;
 import com.platon.contracts.ppos.dto.resp.GovernParam;
 import com.platon.contracts.ppos.dto.resp.TallyResult;
 import com.platon.browser.bean.CollectionEvent;
@@ -61,6 +63,8 @@ public class OnNewBlockAnalyzer {
     @Resource
     private BlockChainConfig chainConfig;
 
+    @Resource
+    private PPOSAnalyzerProxy pposAnalyzerProxy;
 
 	public void analyze(CollectionEvent event, Block block) throws NoSuchBeanException {
 
@@ -94,6 +98,11 @@ public class OnNewBlockAnalyzer {
                         // 提案通过（参数提案，status=2）||提案生效（升级提案,status=5）：
                         // 把提案表中的参数覆盖到Config表中对应的参数
                         Proposal proposal = proposalMap.get(hash);
+
+                        // 切換PPOS分析器
+                        // 當前鏈上生效版本
+                        pposAnalyzerProxy.activeVersion(proposal.getPipId());
+
                         if(proposal.getType()==CustomProposal.TypeEnum.PARAMETER.getCode()){
                             // 如果是参数提案
                             // 把提案表中的参数覆盖到Config表中对应的参数

@@ -131,6 +131,22 @@ v0150:
   #调账日志输出文件
   adjustLogFilePath: ./adjust.log
 
+#PPOS分析器版本配置
+ppos:
+  initVersion: 3810
+  analyzerVersion:
+    - proposalId: '1609410836.4141252'
+      activeVersion: 3840
+      activeAnalyzer:
+        'delegateCreateAnalyzer': 'v0152DelegateCreateAnalyzer'
+        'delegateExitAnalyzer': 'v0152DelegateExitAnalyzer'
+        'delegateRewardClaimAnalyzer': 'v0152DelegateRewardClaimAnalyzer'
+
+    - proposalId: '1609410840.4141252'
+      activeVersion: 3850
+      activeAnalyzer:
+        'delegateCreateAnalyzer': 'v0160DelegateExitAnalyzer'
+
 task:
   #地址统计任务批次大小
   addressBatchSize: 1000

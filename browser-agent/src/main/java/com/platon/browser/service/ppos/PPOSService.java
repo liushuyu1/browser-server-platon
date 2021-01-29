@@ -1,22 +1,11 @@
 package com.platon.browser.service.ppos;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.platon.browser.analyzer.ppos.*;
-import org.springframework.stereotype.Service;
-
-import com.platon.browser.cache.AddressCache;
-import com.platon.browser.cache.NetworkStatCache;
+import com.platon.browser.analyzer.PPOSAnalyzerProxy;
 import com.platon.browser.bean.CollectionEvent;
 import com.platon.browser.bean.DelegateExitResult;
 import com.platon.browser.bean.TxAnalyseResult;
-import com.platon.browser.analyzer.ppos.RestrictingCreateAnalyzer;
-import com.platon.browser.analyzer.ppos.ReportAnalyzer;
-import com.platon.browser.analyzer.ppos.StakeCreateAnalyzer;
-import com.platon.browser.analyzer.ppos.StakeExitAnalyzer;
-import com.platon.browser.analyzer.ppos.StakeIncreaseAnalyzer;
-import com.platon.browser.analyzer.ppos.StakeModifyAnalyzer;
+import com.platon.browser.cache.AddressCache;
+import com.platon.browser.cache.NetworkStatCache;
 import com.platon.browser.elasticsearch.dto.Block;
 import com.platon.browser.elasticsearch.dto.DelegationReward;
 import com.platon.browser.elasticsearch.dto.NodeOpt;
@@ -24,10 +13,12 @@ import com.platon.browser.elasticsearch.dto.Transaction;
 import com.platon.browser.exception.BlockNumberException;
 import com.platon.browser.exception.BusinessException;
 import com.platon.browser.exception.NoSuchBeanException;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @description: ppos服务
@@ -38,35 +29,8 @@ import javax.annotation.Resource;
 @Service
 public class PPOSService {
     @Resource
-    private StakeCreateAnalyzer stakeCreateAnalyzer;
-    @Resource
-    private StakeModifyAnalyzer stakeModifyAnalyzer;
-    @Resource
-    private StakeIncreaseAnalyzer stakeIncreaseAnalyzer;
-    @Resource
-    private StakeExitAnalyzer stakeExitAnalyzer;
-    @Resource
-    private ReportAnalyzer reportAnalyzer;
-    @Resource
-    private DelegateCreateAnalyzer delegateCreateAnalyzer;
-    @Resource
-    private DelegateExitAnalyzer delegateExitAnalyzer;
-    @Resource
-    private ProposalTextAnalyzer proposalTextAnalyzer;
-    @Resource
-    private ProposalUpgradeAnalyzer proposalUpgradeAnalyzer;
-    @Resource
-    private ProposalParameterAnalyzer proposalParameterAnalyzer;
-    @Resource
-    private ProposalCancelAnalyzer proposalCancelAnalyzer;
-    @Resource
-    private ProposalVoteAnalyzer proposalVoteAnalyzer;
-    @Resource
-    private VersionDeclareAnalyzer proposalVersionAnalyzer;
-    @Resource
-    private RestrictingCreateAnalyzer restrictingCreateAnalyzer;
-    @Resource
-    private DelegateRewardClaimAnalyzer delegateRewardClaimAnalyzer;
+    private PPOSAnalyzerProxy pposAnalyzerProxy;
+
     @Resource
     private NetworkStatCache networkStatCache;
     @Resource
@@ -82,6 +46,7 @@ public class PPOSService {
      * @return
      */
     public TxAnalyseResult analyze(CollectionEvent event) {
+
         long startTime = System.currentTimeMillis();
 
         TxAnalyseResult tar =
@@ -151,62 +116,62 @@ public class PPOSService {
 
             switch (tx.getTypeEnum()) {
                 case STAKE_CREATE: // 1000 创建验证人
-                    nodeOpt = this.stakeCreateAnalyzer.analyze(event, tx);
+                    nodeOpt = (NodeOpt) pposAnalyzerProxy.getStakeCreateAnalyzer().analyze(event, tx);
                     break;
                 case STAKE_MODIFY: // 1001 编辑验证人
-                    nodeOpt = this.stakeModifyAnalyzer.analyze(event, tx);
+                    nodeOpt = (NodeOpt) pposAnalyzerProxy.getStakeModifyAnalyzer().analyze(event, tx);
                     break;
                 case STAKE_INCREASE: // 1002 增持质押
-                    nodeOpt = this.stakeIncreaseAnalyzer.analyze(event, tx);
+                    nodeOpt = (NodeOpt) pposAnalyzerProxy.getStakeIncreaseAnalyzer().analyze(event, tx);
                     break;
                 case STAKE_EXIT: // 1003 退出质押
-                    nodeOpt = this.stakeExitAnalyzer.analyze(event, tx);
+                    nodeOpt = (NodeOpt) pposAnalyzerProxy.getStakeExitAnalyzer().analyze(event, tx);
                     break;
                 case DELEGATE_CREATE: // 1004
-                    this.delegateCreateAnalyzer.analyze(event, tx);
+                    pposAnalyzerProxy.getDelegateCreateAnalyzer().analyze(event, tx);
                     break;
                 case DELEGATE_EXIT: // 1005
-                    DelegateExitResult der = this.delegateExitAnalyzer.analyze(event, tx);
+                    DelegateExitResult der = (DelegateExitResult)pposAnalyzerProxy.getDelegateExitAnalyzer().analyze(event, tx);
                     delegationReward = der.getDelegationReward();
                     break;
                 case PROPOSAL_TEXT: // 2000
-                    nodeOpt = this.proposalTextAnalyzer.analyze(event, tx);
+                    nodeOpt = (NodeOpt) pposAnalyzerProxy.getProposalTextAnalyzer().analyze(event, tx);
                     if (Transaction.StatusEnum.SUCCESS.getCode() == tx.getStatus()) {
                         tar.setProposalQty(tar.getProposalQty() + 1);
                     }
                     break;
                 case PROPOSAL_UPGRADE: // 2001
-                    nodeOpt = this.proposalUpgradeAnalyzer.analyze(event, tx);
+                    nodeOpt = (NodeOpt) pposAnalyzerProxy.getProposalUpgradeAnalyzer().analyze(event, tx);
                     if (Transaction.StatusEnum.SUCCESS.getCode() == tx.getStatus()) {
                         tar.setProposalQty(tar.getProposalQty() + 1);
                     }
                     break;
                 case PROPOSAL_PARAMETER: // 2002
-                    nodeOpt = this.proposalParameterAnalyzer.analyze(event, tx);
+                    nodeOpt = (NodeOpt) pposAnalyzerProxy.getProposalParameterAnalyzer().analyze(event, tx);
                     if (Transaction.StatusEnum.SUCCESS.getCode() == tx.getStatus()) {
                         tar.setProposalQty(tar.getProposalQty() + 1);
                     }
                     break;
                 case PROPOSAL_CANCEL: // 2005
-                    nodeOpt = this.proposalCancelAnalyzer.analyze(event, tx);
+                    nodeOpt = (NodeOpt) pposAnalyzerProxy.getProposalCancelAnalyzer().analyze(event, tx);
                     if (Transaction.StatusEnum.SUCCESS.getCode() == tx.getStatus()) {
                         tar.setProposalQty(tar.getProposalQty() + 1);
                     }
                     break;
                 case PROPOSAL_VOTE: // 2003
-                    nodeOpt = this.proposalVoteAnalyzer.analyze(event, tx);
+                    nodeOpt = (NodeOpt) pposAnalyzerProxy.getProposalVoteAnalyzer().analyze(event, tx);
                     break;
                 case VERSION_DECLARE: // 2004
-                    nodeOpt = this.proposalVersionAnalyzer.analyze(event, tx);
+                    nodeOpt = (NodeOpt) pposAnalyzerProxy.getVersionDeclareAnalyzer().analyze(event, tx);
                     break;
                 case REPORT: // 3000
-                    nodeOpt = this.reportAnalyzer.analyze(event, tx);
+                    nodeOpt = (NodeOpt) pposAnalyzerProxy.getReportAnalyzer().analyze(event, tx);
                     break;
                 case RESTRICTING_CREATE: // 4000
-                    this.restrictingCreateAnalyzer.analyze(event, tx);
+                    pposAnalyzerProxy.getRestrictingCreateAnalyzer().analyze(event, tx);
                     break;
                 case CLAIM_REWARDS: // 5000
-                    delegationReward = this.delegateRewardClaimAnalyzer.analyze(event, tx);
+                    delegationReward = (DelegationReward) pposAnalyzerProxy.getDelegateRewardClaimAnalyzer().analyze(event, tx);
                     break;
                 default:
                     break;
