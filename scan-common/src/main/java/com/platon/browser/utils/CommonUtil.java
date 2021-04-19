@@ -2,6 +2,7 @@ package com.platon.browser.utils;
 
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.StrUtil;
+import lombok.Data;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -43,9 +44,6 @@ public class CommonUtil {
         } catch (NullPointerException e) {
             return Optional.empty();
         }
-    }
-
-    public static void main(String[] args) {
     }
 
 }
