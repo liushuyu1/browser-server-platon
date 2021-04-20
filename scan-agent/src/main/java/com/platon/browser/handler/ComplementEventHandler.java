@@ -22,12 +22,9 @@ public class ComplementEventHandler implements EventHandler<ComplementEvent> {
 
     @Override
     public void onEvent(ComplementEvent event, long sequence, boolean endOfBatch) {
-        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
         long startTime = System.currentTimeMillis();
-
-        log.info("ComplementEvent处理:{}(event(block({}),transactions({}),sequence({}),endOfBatch({}))",
-                Thread.currentThread().getStackTrace()[1].getMethodName(), event.getBlock().getNum(), event.getTransactions().size(), sequence, endOfBatch);
         try {
+            MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
             // 发布至持久化队列
             persistenceEventPublisher.publish(event.getBlock(), event.getTransactions(), event.getNodeOpts(), event.getDelegationRewards(), event.getTraceId());
             // 释放对象引用
@@ -35,10 +32,10 @@ public class ComplementEventHandler implements EventHandler<ComplementEvent> {
         } catch (Exception e) {
             log.error("", e);
             throw e;
+        } finally {
+            log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
+            MDC.remove(CommonConstant.TRACE_ID);
         }
-
-        log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
-        MDC.remove(CommonConstant.TRACE_ID);
     }
 
 }

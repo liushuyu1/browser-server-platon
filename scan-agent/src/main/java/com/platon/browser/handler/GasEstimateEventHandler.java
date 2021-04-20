@@ -23,32 +23,35 @@ public class GasEstimateEventHandler implements EventHandler<GasEstimateEvent> {
 
     @Resource
     private GasEstimateLogMapper gasEstimateLogMapper;
+
     @Resource
     private EpochBusinessMapper epochBusinessMapper;
+
     private Long prevSeq = 0L;
 
     @Override
     @Retryable(value = Exception.class, maxAttempts = Integer.MAX_VALUE)
     public void onEvent(GasEstimateEvent event, long sequence, boolean endOfBatch) {
-        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
-        if(prevSeq.equals(event.getSeq())){
-            // 如果当前序列号等于前一次的序列号，证明消息已经处理过
-            return;
-        }
         long startTime = System.currentTimeMillis();
         try {
+            MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
+            if (prevSeq.equals(event.getSeq())) {
+                // 如果当前序列号等于前一次的序列号，证明消息已经处理过
+                return;
+            }
             List<GasEstimate> estimateList = event.getEstimateList();
-            if(estimateList!=null&&!estimateList.isEmpty()){
+            if (estimateList != null && !estimateList.isEmpty()) {
                 epochBusinessMapper.updateGasEstimate(estimateList);
             }
             // es入库完成后删除mysql中的日志记录
             gasEstimateLogMapper.deleteByPrimaryKey(event.getSeq());
-            prevSeq=event.getSeq();
-        }catch (Exception e){
-            log.error("",e);
+            prevSeq = event.getSeq();
+        } catch (Exception e) {
+            log.error("", e);
+        } finally {
+            log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
+            MDC.remove(CommonConstant.TRACE_ID);
         }
-
-        log.debug("处理耗时:{} ms",System.currentTimeMillis()-startTime);
-        MDC.remove(CommonConstant.TRACE_ID);
     }
+
 }

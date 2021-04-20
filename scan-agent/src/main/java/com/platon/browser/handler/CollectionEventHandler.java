@@ -81,15 +81,16 @@ public class CollectionEventHandler implements EventHandler<CollectionEvent> {
     @Transactional
     @Retryable(value = Exception.class, maxAttempts = Integer.MAX_VALUE)
     public void onEvent(CollectionEvent event, long sequence, boolean endOfBatch) throws Exception {
-        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
         long startTime = System.currentTimeMillis();
-        log.info("当前区块[{}]有[{}]笔交易", event.getBlock().getNum(), CommonUtil.ofNullable(() -> event.getTransactions().size()).orElse(0));
-
-        // 使用已入库的交易数量初始化交易ID初始值
-        if (transactionId == 0)
-            transactionId = networkStatCache.getNetworkStat().getTxQty();
 
         try {
+            MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
+            log.info("当前区块[{}]有[{}]笔交易", event.getBlock().getNum(), CommonUtil.ofNullable(() -> event.getTransactions().size()).orElse(0));
+
+            // 使用已入库的交易数量初始化交易ID初始值
+            if (transactionId == 0)
+                transactionId = networkStatCache.getNetworkStat().getTxQty();
+
             List<Transaction> transactions = event.getTransactions();
             // 确保交易从小到大的索引顺序
             transactions.sort(Comparator.comparing(Transaction::getIndex));
@@ -162,10 +163,9 @@ public class CollectionEventHandler implements EventHandler<CollectionEvent> {
             // 1、如果出现异常，由于事务保证，当前事务统计的地址数据不会入库mysql，此时应该清空增量缓存，等待下次重试时重新生成缓存
             // 2、如果正常结束，当前事务统计的地址数据会入库mysql，此时应该清空增量缓存
             addressCache.cleanAll();
+            log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
+            MDC.remove(CommonConstant.TRACE_ID);
         }
-
-        log.error("处理耗时:{} ms", System.currentTimeMillis() - startTime);
-        MDC.remove(CommonConstant.TRACE_ID);
     }
 
 }

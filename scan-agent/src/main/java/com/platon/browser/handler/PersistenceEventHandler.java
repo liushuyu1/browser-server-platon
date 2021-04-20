@@ -59,15 +59,14 @@ public class PersistenceEventHandler implements EventHandler<PersistenceEvent> {
     @Override
     @Retryable(value = Exception.class, maxAttempts = Integer.MAX_VALUE, label = "PersistenceEventHandler")
     public void onEvent(PersistenceEvent event, long sequence, boolean endOfBatch) throws IOException, InterruptedException {
-        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
         long startTime = System.currentTimeMillis();
-        log.info("当前区块[{}]有[{}]笔交易,有[{}]笔节点操作,有[{}]笔委托奖励",
-                event.getBlock().getNum(),
-                CommonUtil.ofNullable(() -> event.getTransactions().size()).orElse(0),
-                CommonUtil.ofNullable(() -> event.getNodeOpts().size()).orElse(0),
-                CommonUtil.ofNullable(() -> event.getDelegationRewards().size()).orElse(0));
-
         try {
+            MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
+            log.info("当前区块[{}]有[{}]笔交易,有[{}]笔节点操作,有[{}]笔委托奖励",
+                    event.getBlock().getNum(),
+                    CommonUtil.ofNullable(() -> event.getTransactions().size()).orElse(0),
+                    CommonUtil.ofNullable(() -> event.getNodeOpts().size()).orElse(0),
+                    CommonUtil.ofNullable(() -> event.getDelegationRewards().size()).orElse(0));
             blockStage.add(event.getBlock());
             transactionStage.addAll(event.getTransactions());
             nodeOptStage.addAll(event.getNodeOpts());
@@ -140,10 +139,10 @@ public class PersistenceEventHandler implements EventHandler<PersistenceEvent> {
         } catch (Exception e) {
             log.error("", e);
             throw e;
+        } finally {
+            log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
+            MDC.remove(CommonConstant.TRACE_ID);
         }
-
-        log.error("处理耗时:{} ms", System.currentTimeMillis() - startTime);
-        MDC.remove(CommonConstant.TRACE_ID);
     }
 
 }
