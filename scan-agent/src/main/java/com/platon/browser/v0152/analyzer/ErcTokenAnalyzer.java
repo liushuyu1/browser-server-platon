@@ -3,6 +3,7 @@ package com.platon.browser.v0152.analyzer;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.platon.browser.bean.CollectionBlock;
 import com.platon.browser.bean.CollectionTransaction;
@@ -92,6 +93,9 @@ public class ErcTokenAnalyzer {
             token.setTokenTxQty(0);
             customTokenMapper.batchInsertOrUpdateSelective(Collections.singletonList(token), Token.Column.values());
             ercCache.tokenCache.put(token.getAddress(), token);
+            log.info("创建token[{}]入库，并加入到地址缓存", JSONUtil.toJsonStr(token));
+        } else {
+            log.error("该token地址[{}]无法识别该类型[{}]", token.getAddress(), token.getTypeEnum());
         }
         return token;
     }
@@ -237,6 +241,7 @@ public class ErcTokenAnalyzer {
         });
         tx.setErc20TxInfo(getErcTxInfo(tx.getErc20TxList()));
         tx.setErc721TxInfo(getErcTxInfo(tx.getErc721TxList()));
+        log.info("当前交易[{}]有[{}]笔log,其中token交易有[{}]笔，其中erc20有[{}]笔,其中erc721有[{}]笔", tx.getHash(), receipt.getLogs().size(), tokenLogs.size(), tx.getErc20TxList().size(), tx.getErc721TxList().size());
     }
 
 }

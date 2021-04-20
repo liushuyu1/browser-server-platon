@@ -1,5 +1,6 @@
 package com.platon.browser;
 
+import com.platon.browser.bean.CommonConstant;
 import com.platon.browser.bean.EpochMessage;
 import com.platon.browser.bean.ReceiptResult;
 import com.platon.browser.bootstrap.bean.InitializationResult;
@@ -12,10 +13,12 @@ import com.platon.browser.service.block.BlockService;
 import com.platon.browser.service.epoch.EpochService;
 import com.platon.browser.service.receipt.ReceiptService;
 import com.platon.browser.utils.AppStatusUtil;
+import com.platon.browser.utils.CommonUtil;
 import com.platon.protocol.core.methods.response.PlatonBlock;
 import com.ulisesbocchio.jasyptspringboot.annotation.EnableEncryptableProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.annotation.MapperScan;
+import org.slf4j.MDC;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -77,24 +80,27 @@ public class AgentApplication implements ApplicationRunner {
         if (AppStatusUtil.isStopped()) {
             return;
         }
+        String traceId = CommonUtil.getTraceId();
+        MDC.put(CommonConstant.TRACE_ID, traceId);
         // 把应用置为BOOTING开机状态
         AppStatusUtil.setStatus(AppStatus.BOOTING);
-        // 0出块循环等待
         retryableClient.zeroBlockNumberWait();
-        // 进入应用初始化子流程
-        InitializationResult initialResult = initializationService.init();
-        // 进入一致性开机自检子流程
-        consistencyService.post();
+        InitializationResult initialResult = initializationService.init(traceId);
+        consistencyService.post(traceId);
         // 启动自检和初始化完成后,把应用置为RUNNING运行状态,让定时任务可以执行业务逻辑
         AppStatusUtil.setStatus(AppStatus.RUNNING);
         // 已采最高块号
         long collectedNumber = initialResult.getCollectedBlockNumber();
         // 前一个块号
         long preBlockNum;
+        MDC.remove(CommonConstant.TRACE_ID);
         // 进入区块采集主流程
         while (true) {
             try {
+                traceId = CommonUtil.getTraceId();
+                MDC.put(CommonConstant.TRACE_ID, traceId);
                 preBlockNum = collectedNumber++;
+                log.info("当前采集块高为{}",collectedNumber);
                 // 检查区块号是否合法
                 blockService.checkBlockNumber(collectedNumber);
                 // 异步获取区块
@@ -103,13 +109,16 @@ public class AgentApplication implements ApplicationRunner {
                 CompletableFuture<ReceiptResult> receiptCF = receiptService.getReceiptAsync(collectedNumber);
                 // 获取周期切换消息
                 EpochMessage epochMessage = epochService.getEpochMessage(collectedNumber);
-                blockEventPublisher.publish(blockCF, receiptCF, epochMessage);
+                blockEventPublisher.publish(blockCF, receiptCF, epochMessage, traceId);
                 if (preBlockNum != 0L && (collectedNumber - preBlockNum != 1)) {
                     throw new AssertionError();
                 }
+                MDC.remove(CommonConstant.TRACE_ID);
             } catch (Exception e) {
                 log.error("程序因错误而停止:", e);
                 break;
+            } finally {
+                MDC.clear();
             }
         }
     }

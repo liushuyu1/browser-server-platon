@@ -1,5 +1,6 @@
 package com.platon.browser.bootstrap;
 
+import com.platon.browser.bean.CommonConstant;
 import com.platon.protocol.core.methods.response.PlatonBlock;
 import com.lmax.disruptor.EventHandler;
 import com.platon.browser.analyzer.BlockAnalyzer;
@@ -22,6 +23,7 @@ import com.platon.browser.service.elasticsearch.EsImportService;
 import com.platon.browser.service.redis.RedisImportService;
 import com.platon.browser.utils.BakDataDeleteUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.BeanUtils;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
@@ -40,32 +42,38 @@ public class BootstrapEventHandler implements EventHandler<BootstrapEvent> {
 
     @Resource
     private EsImportService esImportService;
+
     @Resource
     private RedisImportService redisImportService;
+
     @Resource
     private TxBakMapper txBakMapper;
+
     @Resource
     private NOptBakMapper nOptBakMapper;
+
     @Resource
     private BlockAnalyzer blockAnalyzer;
 
     private Set<Block> blocks = new HashSet<>();
+
     private Set<Transaction> transactions = new HashSet<>();
 
     @Override
     @Retryable(value = Exception.class, maxAttempts = Integer.MAX_VALUE, label = "BootstrapEventHandler")
     public void onEvent(BootstrapEvent event, long sequence, boolean endOfBatch)
-        throws ExecutionException, InterruptedException, BeanCreateOrUpdateException, IOException,
-        ContractInvokeException, BlankResponseException {
+            throws ExecutionException, InterruptedException, BeanCreateOrUpdateException, IOException,
+            ContractInvokeException, BlankResponseException {
+        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
         long startTime = System.currentTimeMillis();
 
         log.debug("BootstrapEvent处理:{}(event(blockCF({}),transactions({})),sequence({}),endOfBatch({}))",
-            Thread.currentThread().getStackTrace()[1].getMethodName(), event.getBlockCF().toString(),
-            event.getReceiptCF().toString(), sequence, endOfBatch);
+                Thread.currentThread().getStackTrace()[1].getMethodName(), event.getBlockCF().toString(),
+                event.getReceiptCF().toString(), sequence, endOfBatch);
         try {
             PlatonBlock.Block rawBlock = event.getBlockCF().get().getBlock();
             ReceiptResult receiptResult = event.getReceiptCF().get();
-            CollectionBlock block = blockAnalyzer.analyze(rawBlock,receiptResult);
+            CollectionBlock block = blockAnalyzer.analyze(rawBlock, receiptResult);
 
             this.clear();
             this.blocks.add(block);
@@ -127,10 +135,12 @@ public class BootstrapEventHandler implements EventHandler<BootstrapEvent> {
         }
 
         log.debug("处理耗时:{} ms", System.currentTimeMillis() - startTime);
+        MDC.remove(CommonConstant.TRACE_ID);
     }
 
     private void clear() {
         this.blocks.clear();
         this.transactions.clear();
     }
+
 }

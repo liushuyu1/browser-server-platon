@@ -2,6 +2,7 @@ package com.platon.browser.handler;
 
 import com.lmax.disruptor.EventHandler;
 import com.platon.browser.bean.CollectionEvent;
+import com.platon.browser.bean.CommonConstant;
 import com.platon.browser.bean.TxAnalyseResult;
 import com.platon.browser.cache.AddressCache;
 import com.platon.browser.cache.NetworkStatCache;
@@ -20,7 +21,9 @@ import com.platon.browser.service.block.BlockService;
 import com.platon.browser.service.statistic.StatisticService;
 import com.platon.browser.service.ppos.PPOSService;
 import com.platon.browser.utils.BakDataDeleteUtil;
+import com.platon.browser.utils.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.BeanUtils;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
@@ -40,22 +43,31 @@ public class CollectionEventHandler implements EventHandler<CollectionEvent> {
 
     @Resource
     private PPOSService pposService;
+
     @Resource
     private BlockService blockService;
+
     @Resource
     private StatisticService statisticService;
+
     @Resource
     private ComplementEventPublisher complementEventPublisher;
+
     @Resource
     private NetworkStatCache networkStatCache;
+
     @Resource
     private NOptBakMapper nOptBakMapper;
+
     @Resource
     private CustomNOptBakMapper customNOptBakMapper;
+
     @Resource
     private TxBakMapper txBakMapper;
+
     @Resource
     private CustomTxBakMapper customTxBakMapper;
+
     @Resource
     private AddressCache addressCache;
 
@@ -63,16 +75,15 @@ public class CollectionEventHandler implements EventHandler<CollectionEvent> {
     private long transactionId = 0;
 
     private long txDeleteBatchCount = 0;
+
     private long optDeleteBatchCount = 0;
 
     @Transactional
     @Retryable(value = Exception.class, maxAttempts = Integer.MAX_VALUE)
     public void onEvent(CollectionEvent event, long sequence, boolean endOfBatch) throws Exception {
+        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
         long startTime = System.currentTimeMillis();
-
-        log.debug("CollectionEvent处理:{}(event(block({}),transactions({})),sequence({}),endOfBatch({}))",
-            Thread.currentThread().getStackTrace()[1].getMethodName(), event.getBlock().getNum(),
-            event.getTransactions().size(), sequence, endOfBatch);
+        log.info("当前区块[{}]有[{}]笔交易", event.getBlock().getNum(), CommonUtil.ofNullable(() -> event.getTransactions().size()).orElse(0));
 
         // 使用已入库的交易数量初始化交易ID初始值
         if (transactionId == 0)
@@ -85,7 +96,7 @@ public class CollectionEventHandler implements EventHandler<CollectionEvent> {
             for (Transaction tx : transactions) {
                 tx.setId(++transactionId);
             }
-            
+
             // 根据区块号解析出业务参数
             List<NodeOpt> nodeOpts1 = blockService.analyze(event);
             // 根据交易解析出业务参数
@@ -97,7 +108,7 @@ public class CollectionEventHandler implements EventHandler<CollectionEvent> {
                 nodeOpts1.addAll(txAnalyseResult.getNodeOptList());
 
             complementEventPublisher.publish(event.getBlock(), transactions, nodeOpts1,
-                txAnalyseResult.getDelegationRewardList());
+                    txAnalyseResult.getDelegationRewardList(), event.getTraceId());
 
             txDeleteBatchCount++;
             optDeleteBatchCount++;
@@ -145,7 +156,7 @@ public class CollectionEventHandler implements EventHandler<CollectionEvent> {
             log.error("", e);
             throw e;
         } finally {
-            log.info("清除地址缓存【addressCache】数据【{}】条",addressCache.getAll().size());
+            log.info("清除地址缓存【addressCache】数据【{}】条", addressCache.getAll().size());
             // 当前事务不管是正常处理结束或异常结束，都需要重置地址缓存，防止代码中任何地方出问题后，缓存中留存脏数据
             // 因为地址缓存是当前事务处理的增量缓存，在 StatisticsAddressAnalyzer 进行数据合并入库时：
             // 1、如果出现异常，由于事务保证，当前事务统计的地址数据不会入库mysql，此时应该清空增量缓存，等待下次重试时重新生成缓存
@@ -153,6 +164,8 @@ public class CollectionEventHandler implements EventHandler<CollectionEvent> {
             addressCache.cleanAll();
         }
 
-        log.debug("处理耗时:{} ms", System.currentTimeMillis() - startTime);
+        log.error("处理耗时:{} ms", System.currentTimeMillis() - startTime);
+        MDC.remove(CommonConstant.TRACE_ID);
     }
+
 }

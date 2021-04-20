@@ -1,11 +1,13 @@
 package com.platon.browser.handler;
 
 import com.lmax.disruptor.EventHandler;
+import com.platon.browser.bean.CommonConstant;
 import com.platon.browser.bean.GasEstimateEvent;
 import com.platon.browser.dao.entity.GasEstimate;
 import com.platon.browser.dao.mapper.EpochBusinessMapper;
 import com.platon.browser.dao.mapper.GasEstimateLogMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +30,7 @@ public class GasEstimateEventHandler implements EventHandler<GasEstimateEvent> {
     @Override
     @Retryable(value = Exception.class, maxAttempts = Integer.MAX_VALUE)
     public void onEvent(GasEstimateEvent event, long sequence, boolean endOfBatch) {
+        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
         if(prevSeq.equals(event.getSeq())){
             // 如果当前序列号等于前一次的序列号，证明消息已经处理过
             return;
@@ -46,5 +49,6 @@ public class GasEstimateEventHandler implements EventHandler<GasEstimateEvent> {
         }
 
         log.debug("处理耗时:{} ms",System.currentTimeMillis()-startTime);
+        MDC.remove(CommonConstant.TRACE_ID);
     }
 }
