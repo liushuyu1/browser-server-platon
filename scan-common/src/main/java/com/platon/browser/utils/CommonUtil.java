@@ -2,6 +2,10 @@ package com.platon.browser.utils;
 
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.StrUtil;
+import lombok.Data;
+
+import java.util.Optional;
+import java.util.function.Supplier;
 
 import java.util.Optional;
 import java.util.function.Supplier;
