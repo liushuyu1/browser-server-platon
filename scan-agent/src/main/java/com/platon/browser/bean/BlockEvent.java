@@ -11,6 +11,9 @@ import java.util.concurrent.CompletableFuture;
 @Data
 public class BlockEvent {
 
+    /**
+     * 链路ID
+     */
     private String traceId;
 
     // 当前原生区块的Future

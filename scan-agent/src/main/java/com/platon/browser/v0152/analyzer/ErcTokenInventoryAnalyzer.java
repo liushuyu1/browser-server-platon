@@ -69,7 +69,6 @@ public class ErcTokenInventoryAnalyzer {
                     tokenInventoryKey.setTokenAddress(tx.getContract());
                     delTokenInventory.add(tokenInventoryKey);
                 }
-                log.info("当前erc721地址[{}],tokenId[{}],持有者地址[{}],该token的交易数为[{}],该持有者对该令牌的交易数为[{}]", tokenInventory.getTokenAddress(), tokenInventory.getTokenId(), tokenInventory.getOwner(), tokenInventory.getTokenTxQty(), tokenInventory.getTokenOwnerTxQty());
             });
             if (!insertOrUpdate.isEmpty()) {
                 customTokenInventoryMapper.batchInsertOrUpdateSelective(insertOrUpdate, TokenInventory.Column.values());

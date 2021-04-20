@@ -20,7 +20,11 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 地址统计缓存
+ * 地址统计缓存，谨慎使用
+ * 在A区块由BlockEventHandler进入CollectionEventHandler，还没有来得及清除缓存的时候，A+1区块进入到BlockEventHandler或CollectionEventHandler中就会读取到脏数据
+ *
+ * @author huangyongpeng@matrixelements.com
+ * @date 2021/4/20
  */
 @Slf4j
 @Component

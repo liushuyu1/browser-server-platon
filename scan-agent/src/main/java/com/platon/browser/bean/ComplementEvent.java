@@ -11,6 +11,9 @@ import java.util.List;
 @Data
 public class ComplementEvent {
 
+    /**
+     * 链路ID
+     */
     private String traceId;
 
     // 区块信息

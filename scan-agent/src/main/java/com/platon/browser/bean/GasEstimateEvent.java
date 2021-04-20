@@ -11,6 +11,9 @@ import java.util.List;
 @Data
 public class GasEstimateEvent {
 
+    /**
+     * 链路ID
+     */
     private String traceId;
 
     // 消息唯一标识，防止重复处理：区块号*10000+交易index
