@@ -39,9 +39,19 @@ public class BlockEventHandler implements EventHandler<BlockEvent> {
     public void onEvent(BlockEvent event, long sequence, boolean endOfBatch)
             throws ExecutionException, InterruptedException, BeanCreateOrUpdateException, IOException,
             ContractInvokeException, BlankResponseException {
+        surroundExec(event, sequence, endOfBatch);
+    }
+
+    private void surroundExec(BlockEvent event, long sequence, boolean endOfBatch) throws InterruptedException, ExecutionException, ContractInvokeException, BeanCreateOrUpdateException, BlankResponseException {
+        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
         long startTime = System.currentTimeMillis();
+        exec(event, sequence, endOfBatch);
+        log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
+        MDC.remove(CommonConstant.TRACE_ID);
+    }
+
+    private void exec(BlockEvent event, long sequence, boolean endOfBatch) throws InterruptedException, ExecutionException, BlankResponseException, BeanCreateOrUpdateException, ContractInvokeException {
         try {
-            MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
             PlatonBlock.Block rawBlock = event.getBlockCF().get().getBlock();
             ReceiptResult receiptResult = event.getReceiptCF().get();
             log.info("当前区块[{}]有[{}]笔交易", rawBlock.getNumber(), CommonUtil.ofNullable(() -> rawBlock.getTransactions().size()).orElse(0));
@@ -54,9 +64,6 @@ public class BlockEventHandler implements EventHandler<BlockEvent> {
         } catch (Exception e) {
             log.error("区块事件处理异常", e);
             throw e;
-        } finally {
-            log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
-            MDC.remove(CommonConstant.TRACE_ID);
         }
     }
 

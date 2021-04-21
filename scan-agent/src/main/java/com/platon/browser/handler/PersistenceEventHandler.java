@@ -59,9 +59,19 @@ public class PersistenceEventHandler implements EventHandler<PersistenceEvent> {
     @Override
     @Retryable(value = Exception.class, maxAttempts = Integer.MAX_VALUE, label = "PersistenceEventHandler")
     public void onEvent(PersistenceEvent event, long sequence, boolean endOfBatch) throws IOException, InterruptedException {
+        surroundExec(event, sequence, endOfBatch);
+    }
+
+    private void surroundExec(PersistenceEvent event, long sequence, boolean endOfBatch) throws IOException, InterruptedException {
+        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
         long startTime = System.currentTimeMillis();
+        exec(event, sequence, endOfBatch);
+        log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
+        MDC.remove(CommonConstant.TRACE_ID);
+    }
+
+    private void exec(PersistenceEvent event, long sequence, boolean endOfBatch) throws IOException, InterruptedException {
         try {
-            MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
             log.info("当前区块[{}]有[{}]笔交易,有[{}]笔节点操作,有[{}]笔委托奖励",
                     event.getBlock().getNum(),
                     CommonUtil.ofNullable(() -> event.getTransactions().size()).orElse(0),
@@ -139,10 +149,8 @@ public class PersistenceEventHandler implements EventHandler<PersistenceEvent> {
         } catch (Exception e) {
             log.error("", e);
             throw e;
-        } finally {
-            log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
-            MDC.remove(CommonConstant.TRACE_ID);
         }
+
     }
 
 }

@@ -16,6 +16,7 @@ import com.platon.browser.dao.mapper.NOptBakMapper;
 import com.platon.browser.dao.mapper.TxBakMapper;
 import com.platon.browser.elasticsearch.dto.NodeOpt;
 import com.platon.browser.elasticsearch.dto.Transaction;
+import com.platon.browser.exception.NoSuchBeanException;
 import com.platon.browser.publisher.ComplementEventPublisher;
 import com.platon.browser.service.block.BlockService;
 import com.platon.browser.service.statistic.StatisticService;
@@ -81,10 +82,20 @@ public class CollectionEventHandler implements EventHandler<CollectionEvent> {
     @Transactional
     @Retryable(value = Exception.class, maxAttempts = Integer.MAX_VALUE)
     public void onEvent(CollectionEvent event, long sequence, boolean endOfBatch) throws Exception {
+        surroundExec(event, sequence, endOfBatch);
+    }
+
+    private void surroundExec(CollectionEvent event, long sequence, boolean endOfBatch) throws Exception {
+        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
         long startTime = System.currentTimeMillis();
+        exec(event, sequence, endOfBatch);
+        log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
+        MDC.remove(CommonConstant.TRACE_ID);
+    }
+
+    private void exec(CollectionEvent event, long sequence, boolean endOfBatch) throws Exception {
 
         try {
-            MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
             log.info("当前区块[{}]有[{}]笔交易", event.getBlock().getNum(), CommonUtil.ofNullable(() -> event.getTransactions().size()).orElse(0));
 
             // 使用已入库的交易数量初始化交易ID初始值
@@ -163,8 +174,6 @@ public class CollectionEventHandler implements EventHandler<CollectionEvent> {
             // 1、如果出现异常，由于事务保证，当前事务统计的地址数据不会入库mysql，此时应该清空增量缓存，等待下次重试时重新生成缓存
             // 2、如果正常结束，当前事务统计的地址数据会入库mysql，此时应该清空增量缓存
             addressCache.cleanAll();
-            log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
-            MDC.remove(CommonConstant.TRACE_ID);
         }
     }
 

@@ -32,9 +32,19 @@ public class GasEstimateEventHandler implements EventHandler<GasEstimateEvent> {
     @Override
     @Retryable(value = Exception.class, maxAttempts = Integer.MAX_VALUE)
     public void onEvent(GasEstimateEvent event, long sequence, boolean endOfBatch) {
+        surroundExec(event, sequence, endOfBatch);
+    }
+
+    private void surroundExec(GasEstimateEvent event, long sequence, boolean endOfBatch) {
+        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
         long startTime = System.currentTimeMillis();
+        exec(event, sequence, endOfBatch);
+        log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
+        MDC.remove(CommonConstant.TRACE_ID);
+    }
+
+    private void exec(GasEstimateEvent event, long sequence, boolean endOfBatch) {
         try {
-            MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
             if (prevSeq.equals(event.getSeq())) {
                 // 如果当前序列号等于前一次的序列号，证明消息已经处理过
                 return;
@@ -48,9 +58,6 @@ public class GasEstimateEventHandler implements EventHandler<GasEstimateEvent> {
             prevSeq = event.getSeq();
         } catch (Exception e) {
             log.error("", e);
-        } finally {
-            log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
-            MDC.remove(CommonConstant.TRACE_ID);
         }
     }
 
