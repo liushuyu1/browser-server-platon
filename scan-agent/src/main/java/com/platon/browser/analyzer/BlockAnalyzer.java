@@ -81,6 +81,7 @@ public class BlockAnalyzer {
                 result.setErc721TxQty(newErc721Qty);
                 log.info("当前交易[{}],erc20交易数：原[{}]新[{}],erc721交易数：原[{}]新[{}]", transaction.getHash(), oldErc20Qty, newErc20Qty, oldErc721Qty, newErc721Qty);
             }
+            log.info("节点[{}]在当前区块[{}]累计的交易手续费为[{}]", result.getNodeId(), result.getNum(), result.getTxFee());
         }
         return result;
     }

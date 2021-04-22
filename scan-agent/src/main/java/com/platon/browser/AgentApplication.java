@@ -81,7 +81,7 @@ public class AgentApplication implements ApplicationRunner {
             return;
         }
         String traceId = CommonUtil.getTraceId();
-        MDC.put(CommonConstant.TRACE_ID, traceId);
+        CommonUtil.putTraceId(traceId);
         // 把应用置为BOOTING开机状态
         AppStatusUtil.setStatus(AppStatus.BOOTING);
         retryableClient.zeroBlockNumberWait();
@@ -93,14 +93,14 @@ public class AgentApplication implements ApplicationRunner {
         long collectedNumber = initialResult.getCollectedBlockNumber();
         // 前一个块号
         long preBlockNum;
-        MDC.remove(CommonConstant.TRACE_ID);
+        CommonUtil.removeTraceId();
         // 进入区块采集主流程
         while (true) {
             try {
                 traceId = CommonUtil.getTraceId();
-                MDC.put(CommonConstant.TRACE_ID, traceId);
+                CommonUtil.putTraceId(traceId);
                 preBlockNum = collectedNumber++;
-                log.info("当前采集块高为{}",collectedNumber);
+                log.info("当前采集块高为{}", collectedNumber);
                 // 检查区块号是否合法
                 blockService.checkBlockNumber(collectedNumber);
                 // 异步获取区块
@@ -118,7 +118,7 @@ public class AgentApplication implements ApplicationRunner {
                 log.error("程序因错误而停止:", e);
                 break;
             } finally {
-                MDC.clear();
+                CommonUtil.removeTraceId();
             }
         }
     }

@@ -1,11 +1,8 @@
 package com.platon.browser.filter;
 
-import cn.hutool.core.lang.UUID;
-import cn.hutool.core.util.StrUtil;
 import com.platon.browser.bean.CommonConstant;
 import com.platon.browser.utils.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -31,7 +28,7 @@ public class WebAccessFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) servletRequest;
         String traceId = CommonUtil.getTraceId();
         servletRequest.setAttribute(CommonConstant.TRACE_ID, traceId);
-        MDC.put(CommonConstant.TRACE_ID, traceId);
+        CommonUtil.putTraceId(traceId);
         long start = System.currentTimeMillis();
         log.info("[请求接口开始] 路径URL:{}, 请求方式:{}, 起始时间:{}",
                 request.getRequestURL(),
@@ -46,7 +43,7 @@ public class WebAccessFilter implements Filter {
 
     @Override
     public void destroy() {
-        MDC.clear();
+        CommonUtil.removeTraceId();
     }
 
 }

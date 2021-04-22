@@ -334,7 +334,7 @@ public class InitializationService {
             esErc20TxRepository.initIndex();
             esErc721TxRepository.initIndex();
         } catch (Exception e) {
-            log.error("init es error", e);
+            log.error("初始化ES异常", e);
         }
 
     }

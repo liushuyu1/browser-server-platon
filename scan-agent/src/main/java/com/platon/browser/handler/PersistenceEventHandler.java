@@ -1,7 +1,6 @@
 package com.platon.browser.handler;
 
 import com.lmax.disruptor.EventHandler;
-import com.platon.browser.bean.CommonConstant;
 import com.platon.browser.bean.PersistenceEvent;
 import com.platon.browser.cache.NetworkStatCache;
 import com.platon.browser.config.DisruptorConfig;
@@ -16,7 +15,6 @@ import com.platon.browser.utils.BakDataDeleteUtil;
 import com.platon.browser.utils.CommonUtil;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
@@ -63,11 +61,11 @@ public class PersistenceEventHandler implements EventHandler<PersistenceEvent> {
     }
 
     private void surroundExec(PersistenceEvent event, long sequence, boolean endOfBatch) throws IOException, InterruptedException {
-        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
+        CommonUtil.putTraceId(event.getTraceId());
         long startTime = System.currentTimeMillis();
         exec(event, sequence, endOfBatch);
         log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
-        MDC.remove(CommonConstant.TRACE_ID);
+        CommonUtil.removeTraceId();
     }
 
     private void exec(PersistenceEvent event, long sequence, boolean endOfBatch) throws IOException, InterruptedException {

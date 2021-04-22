@@ -43,11 +43,11 @@ public class BlockEventHandler implements EventHandler<BlockEvent> {
     }
 
     private void surroundExec(BlockEvent event, long sequence, boolean endOfBatch) throws InterruptedException, ExecutionException, ContractInvokeException, BeanCreateOrUpdateException, BlankResponseException {
-        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
+        CommonUtil.putTraceId(event.getTraceId());
         long startTime = System.currentTimeMillis();
         exec(event, sequence, endOfBatch);
         log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
-        MDC.remove(CommonConstant.TRACE_ID);
+        CommonUtil.removeTraceId();
     }
 
     private void exec(BlockEvent event, long sequence, boolean endOfBatch) throws InterruptedException, ExecutionException, BlankResponseException, BeanCreateOrUpdateException, ContractInvokeException {

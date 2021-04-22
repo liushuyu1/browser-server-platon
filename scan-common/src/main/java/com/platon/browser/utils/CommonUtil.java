@@ -2,10 +2,9 @@ package com.platon.browser.utils;
 
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.StrUtil;
-import lombok.Data;
-
-import java.util.Optional;
-import java.util.function.Supplier;
+import com.platon.browser.bean.CommonConstant;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -16,6 +15,7 @@ import java.util.function.Supplier;
  * @author huangyongpeng@matrixelements.com
  * @date 2021/4/17
  */
+@Slf4j
 public class CommonUtil {
 
     /**
@@ -46,6 +46,58 @@ public class CommonUtil {
             return Optional.ofNullable(result);
         } catch (NullPointerException e) {
             return Optional.empty();
+        }
+    }
+
+    /**
+     * 添加全局链路ID--默认生成的链路ID
+     *
+     * @param
+     * @return void
+     * @author huangyongpeng@matrixelements.com
+     * @date 2021/4/22
+     */
+    public static void putTraceId() {
+        try {
+            MDC.put(CommonConstant.TRACE_ID, getTraceId());
+        } catch (Exception e) {
+            log.error("添加链路ID异常", e);
+        }
+    }
+
+    /**
+     * 添加全局链路ID
+     *
+     * @param traceId 链路ID
+     * @return void
+     * @author huangyongpeng@matrixelements.com
+     * @date 2021/4/22
+     */
+    public static void putTraceId(String traceId) {
+        try {
+            if (StrUtil.isNotBlank(traceId)) {
+                MDC.put(CommonConstant.TRACE_ID, traceId);
+            } else {
+                log.error("请输入链路ID");
+            }
+        } catch (Exception e) {
+            log.error("添加链路ID异常", e);
+        }
+    }
+
+    /**
+     * 删除全局链路ID
+     *
+     * @param
+     * @return void
+     * @author huangyongpeng@matrixelements.com
+     * @date 2021/4/22
+     */
+    public static void removeTraceId() {
+        try {
+            MDC.remove(CommonConstant.TRACE_ID);
+        } catch (Exception e) {
+            log.error("删除链路ID异常", e);
         }
     }
 

@@ -9,7 +9,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.ssl.TrustAnyHostnameVerifier;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.platon.browser.bean.CommonConstant;
 import com.platon.browser.bean.TokenHolderCount;
 import com.platon.browser.dao.entity.*;
 import com.platon.browser.dao.mapper.*;
@@ -36,7 +35,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.slf4j.MDC;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -172,15 +170,13 @@ public class ErcTokenUpdateTask {
     public void cronUpdateTokenTotalSupply() {
         lock.lock();
         try {
-            MDC.put(CommonConstant.TRACE_ID, CommonUtil.getTraceId());
-            log.error("=======token的总供应量全量更新开始===========");
+            CommonUtil.putTraceId();
             this.updateTokenTotalSupply();
-            log.error("=======token的总供应量全量更新结束===========");
         } catch (Exception e) {
             log.error("全量更新token的总供应量异常", e);
         } finally {
-            MDC.remove(CommonConstant.TRACE_ID);
             lock.unlock();
+            CommonUtil.removeTraceId();
         }
     }
 
@@ -295,16 +291,14 @@ public class ErcTokenUpdateTask {
     public void cronIncrementUpdateTokenHolderBalance() {
         if (tokenHolderLock.tryLock()) {
             try {
-                MDC.put(CommonConstant.TRACE_ID, CommonUtil.getTraceId());
-                log.error("=======更新token持有者余额增量更新开始===========");
+                CommonUtil.putTraceId();
                 incrementUpdateTokenHolderBalance(esErc20TxRepository, ErcTypeEnum.ERC20, this.getErc20TxSeq());
                 incrementUpdateTokenHolderBalance(esErc721TxRepository, ErcTypeEnum.ERC721, this.getErc721TxSeq());
-                log.error("=======更新token持有者余额增量更新结束===========");
             } catch (Exception e) {
                 log.error("增量更新token持有者余额异常", e);
             } finally {
-                MDC.remove(CommonConstant.TRACE_ID);
                 tokenHolderLock.unlock();
+                CommonUtil.removeTraceId();
             }
         } else {
             log.error("本次增量更新token持有者余额抢不到锁,erc20TxSeq:{},erc721TxSeq:{}", erc20TxSeq, erc721TxSeq);
@@ -434,8 +428,7 @@ public class ErcTokenUpdateTask {
         if (!AppStatusUtil.isRunning()) {
             return;
         }
-        MDC.put(CommonConstant.TRACE_ID, CommonUtil.getTraceId());
-        log.error("=======更新token持有者余额全量更新开始===========");
+        CommonUtil.putTraceId();
         try {
             tokenHolderLock.lock();
             // 分页更新holder的balance
@@ -485,8 +478,7 @@ public class ErcTokenUpdateTask {
         } finally {
             tokenHolderLock.unlock();
         }
-        log.error("=======更新token持有者余额全量更新结束===========");
-        MDC.remove(CommonConstant.TRACE_ID);
+        CommonUtil.removeTraceId();
     }
 
     /**
@@ -502,16 +494,14 @@ public class ErcTokenUpdateTask {
     public void updateTokenInventory() {
         tokenInventoryLock.lock();
         try {
-            MDC.put(CommonConstant.TRACE_ID, CommonUtil.getTraceId());
-            log.error("=======更新token库存信息全量更新开始===========");
+            CommonUtil.putTraceId();
             updateTokenInventory(INVENTORY_UPDATE_POOL, 0, false);
             tokenInventoryUpdate.update(0, false, 0);
-            log.error("=======更新token库存信息全量更新结束===========");
         } catch (Exception e) {
             log.error("更新token库存信息", e);
         } finally {
-            MDC.remove(CommonConstant.TRACE_ID);
             tokenInventoryLock.unlock();
+            CommonUtil.removeTraceId();
         }
     }
 
@@ -528,15 +518,13 @@ public class ErcTokenUpdateTask {
     public void cronIncrementUpdateTokenInventory() {
         if (tokenInventoryLock.tryLock()) {
             try {
-                MDC.put(CommonConstant.TRACE_ID, CommonUtil.getTraceId());
-                log.error("=======更新token库存信息增量更新开始===========");
+                CommonUtil.putTraceId();
                 updateTokenInventory(INCREMENT_INVENTORY_UPDATE_POOL, this.getTokenInventoryPage(), true);
-                log.error("=======更新token库存信息增量更新结束===========");
             } catch (Exception e) {
                 log.error("增量更新token库存信息异常", e);
             } finally {
-                MDC.remove(CommonConstant.TRACE_ID);
                 tokenInventoryLock.unlock();
+                CommonUtil.removeTraceId();
             }
         } else {
             log.error("该次token库存增量更新抢不到锁，增量更新的标记为{}", tokenInventoryPage);

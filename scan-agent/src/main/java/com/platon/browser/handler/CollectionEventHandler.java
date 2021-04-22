@@ -85,11 +85,11 @@ public class CollectionEventHandler implements EventHandler<CollectionEvent> {
     }
 
     private void surroundExec(CollectionEvent event, long sequence, boolean endOfBatch) throws Exception {
-        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
+        CommonUtil.putTraceId(event.getTraceId());
         long startTime = System.currentTimeMillis();
         exec(event, sequence, endOfBatch);
         log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
-        MDC.remove(CommonConstant.TRACE_ID);
+        CommonUtil.removeTraceId();
     }
 
     private void exec(CollectionEvent event, long sequence, boolean endOfBatch) throws Exception {

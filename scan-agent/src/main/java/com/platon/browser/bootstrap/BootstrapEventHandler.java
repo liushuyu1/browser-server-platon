@@ -1,7 +1,5 @@
 package com.platon.browser.bootstrap;
 
-import com.platon.browser.bean.CommonConstant;
-import com.platon.protocol.core.methods.response.PlatonBlock;
 import com.lmax.disruptor.EventHandler;
 import com.platon.browser.analyzer.BlockAnalyzer;
 import com.platon.browser.bean.CollectionBlock;
@@ -22,8 +20,9 @@ import com.platon.browser.exception.ContractInvokeException;
 import com.platon.browser.service.elasticsearch.EsImportService;
 import com.platon.browser.service.redis.RedisImportService;
 import com.platon.browser.utils.BakDataDeleteUtil;
+import com.platon.browser.utils.CommonUtil;
+import com.platon.protocol.core.methods.response.PlatonBlock;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.beans.BeanUtils;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
@@ -64,12 +63,20 @@ public class BootstrapEventHandler implements EventHandler<BootstrapEvent> {
     public void onEvent(BootstrapEvent event, long sequence, boolean endOfBatch)
             throws ExecutionException, InterruptedException, BeanCreateOrUpdateException, IOException,
             ContractInvokeException, BlankResponseException {
-        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
-        long startTime = System.currentTimeMillis();
+        surroundExec(event, sequence, endOfBatch);
+    }
 
-        log.debug("BootstrapEvent处理:{}(event(blockCF({}),transactions({})),sequence({}),endOfBatch({}))",
-                Thread.currentThread().getStackTrace()[1].getMethodName(), event.getBlockCF().toString(),
-                event.getReceiptCF().toString(), sequence, endOfBatch);
+    private void surroundExec(BootstrapEvent event, long sequence, boolean endOfBatch) throws ExecutionException, InterruptedException, BeanCreateOrUpdateException, IOException,
+            ContractInvokeException, BlankResponseException {
+        CommonUtil.putTraceId(event.getTraceId());
+        long startTime = System.currentTimeMillis();
+        exec(event, sequence, endOfBatch);
+        log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
+        CommonUtil.removeTraceId();
+    }
+
+    private void exec(BootstrapEvent event, long sequence, boolean endOfBatch) throws ExecutionException, InterruptedException, BeanCreateOrUpdateException, IOException,
+            ContractInvokeException, BlankResponseException {
         try {
             PlatonBlock.Block rawBlock = event.getBlockCF().get().getBlock();
             ReceiptResult receiptResult = event.getReceiptCF().get();
@@ -133,9 +140,6 @@ public class BootstrapEventHandler implements EventHandler<BootstrapEvent> {
             log.error("", e);
             throw e;
         }
-
-        log.debug("处理耗时:{} ms", System.currentTimeMillis() - startTime);
-        MDC.remove(CommonConstant.TRACE_ID);
     }
 
     private void clear() {

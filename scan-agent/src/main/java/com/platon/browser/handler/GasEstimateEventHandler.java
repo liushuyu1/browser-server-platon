@@ -1,13 +1,12 @@
 package com.platon.browser.handler;
 
 import com.lmax.disruptor.EventHandler;
-import com.platon.browser.bean.CommonConstant;
 import com.platon.browser.bean.GasEstimateEvent;
 import com.platon.browser.dao.entity.GasEstimate;
 import com.platon.browser.dao.mapper.EpochBusinessMapper;
 import com.platon.browser.dao.mapper.GasEstimateLogMapper;
+import com.platon.browser.utils.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
@@ -36,11 +35,11 @@ public class GasEstimateEventHandler implements EventHandler<GasEstimateEvent> {
     }
 
     private void surroundExec(GasEstimateEvent event, long sequence, boolean endOfBatch) {
-        MDC.put(CommonConstant.TRACE_ID, event.getTraceId());
+        CommonUtil.putTraceId(event.getTraceId());
         long startTime = System.currentTimeMillis();
         exec(event, sequence, endOfBatch);
         log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
-        MDC.remove(CommonConstant.TRACE_ID);
+        CommonUtil.removeTraceId();
     }
 
     private void exec(GasEstimateEvent event, long sequence, boolean endOfBatch) {
