@@ -1,6 +1,5 @@
 package com.platon.browser.analyzer;
 
-import cn.hutool.json.JSONUtil;
 import com.platon.browser.bean.CollectionBlock;
 import com.platon.browser.bean.CollectionTransaction;
 import com.platon.browser.bean.ComplementInfo;
