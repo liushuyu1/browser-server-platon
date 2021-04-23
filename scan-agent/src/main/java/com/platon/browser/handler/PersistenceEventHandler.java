@@ -97,7 +97,7 @@ public class PersistenceEventHandler implements EventHandler<PersistenceEvent> {
                 IntSummaryStatistics virtualTransactionSize = transactions.stream().collect(Collectors.summarizingInt(transaction -> transaction.getVirtualTransactions().size()));
                 log.info("入库redis和ES统计:当前块高为[{}],交易数为[{}],erc20交易数为[{}],erc721交易数为[{}],内部转账交易数为[{}],PPOS调用交易数为[{}],虚拟交易数为[{}]",
                         blockNum,
-                        CommonUtil.ofNullable(transactions::size).orElse(0),
+                        CommonUtil.ofNullable(() -> transactions.size()).orElse(0),
                         erc20Size.getSum(),
                         erc721Size.getSum(),
                         transferTxSize,

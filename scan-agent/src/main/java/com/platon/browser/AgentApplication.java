@@ -80,7 +80,7 @@ public class AgentApplication implements ApplicationRunner {
         if (AppStatusUtil.isStopped()) {
             return;
         }
-        String traceId = CommonUtil.getTraceId();
+        String traceId = CommonUtil.createTraceId();
         CommonUtil.putTraceId(traceId);
         // 把应用置为BOOTING开机状态
         AppStatusUtil.setStatus(AppStatus.BOOTING);
@@ -97,7 +97,7 @@ public class AgentApplication implements ApplicationRunner {
         // 进入区块采集主流程
         while (true) {
             try {
-                traceId = CommonUtil.getTraceId();
+                traceId = CommonUtil.createTraceId();
                 CommonUtil.putTraceId(traceId);
                 preBlockNum = collectedNumber++;
                 log.info("当前采集块高为{}", collectedNumber);

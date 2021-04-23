@@ -95,7 +95,6 @@ public class CollectionEventHandler implements EventHandler<CollectionEvent> {
     private void exec(CollectionEvent event, long sequence, boolean endOfBatch) throws Exception {
 
         try {
-            log.info("当前区块[{}]有[{}]笔交易", event.getBlock().getNum(), CommonUtil.ofNullable(() -> event.getTransactions().size()).orElse(0));
 
             // 使用已入库的交易数量初始化交易ID初始值
             if (transactionId == 0)

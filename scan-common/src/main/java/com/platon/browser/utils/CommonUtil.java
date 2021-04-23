@@ -19,21 +19,9 @@ import java.util.function.Supplier;
 public class CommonUtil {
 
     /**
-     * 获取trace-id
-     *
-     * @param
-     * @return java.lang.String
-     * @author huangyongpeng@matrixelements.com
-     * @date 2021/4/17
-     */
-    public static String getTraceId() {
-        return StrUtil.removeAll(UUID.randomUUID().toString(), "-");
-    }
-
-    /**
      * 支持lamda的链式判空
      * 用法：ofNullable(() -> obj.getObj1().getObj2().getObj3()).ifPresent(res -> System.out.println(res));
-     * 解释：会自动判断getObj1()、getObj2()、getObj3()是否为空，如果getObj3()的值不为空，则打印。例如getObj2()为空，结果返回null，而不是报空指针。
+     * 解释：会自动判断obj、getObj1()、getObj2()、getObj3()是否为空，如果getObj3()的值不为空，则打印。例如getObj2()为空，结果返回null，而不是报空指针。
      *
      * @param resolver
      * @return java.util.Optional<T>
@@ -50,6 +38,18 @@ public class CommonUtil {
     }
 
     /**
+     * 创建trace-id
+     *
+     * @param
+     * @return java.lang.String
+     * @author huangyongpeng@matrixelements.com
+     * @date 2021/4/17
+     */
+    public static String createTraceId() {
+        return StrUtil.removeAll(UUID.randomUUID().toString(), "-");
+    }
+
+    /**
      * 添加全局链路ID--默认生成的链路ID
      *
      * @param
@@ -59,7 +59,7 @@ public class CommonUtil {
      */
     public static void putTraceId() {
         try {
-            MDC.put(CommonConstant.TRACE_ID, getTraceId());
+            MDC.put(CommonConstant.TRACE_ID, createTraceId());
         } catch (Exception e) {
             log.error("添加链路ID异常", e);
         }
@@ -83,6 +83,24 @@ public class CommonUtil {
         } catch (Exception e) {
             log.error("添加链路ID异常", e);
         }
+    }
+
+    /**
+     * 获取全局链路ID
+     *
+     * @param
+     * @return java.lang.String
+     * @author huangyongpeng@matrixelements.com
+     * @date 2021/4/23
+     */
+    public static String getTraceId() {
+        String traceId = "";
+        try {
+            traceId = MDC.get(CommonConstant.TRACE_ID);
+        } catch (Exception e) {
+            log.error("获取全局链路ID异常", e);
+        }
+        return traceId;
     }
 
     /**

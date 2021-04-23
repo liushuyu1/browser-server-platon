@@ -67,7 +67,7 @@ public class ConsistencyServiceTest extends AgentTestBase {
 
         NetworkStat networkStat = null;
         when(networkStatMapper.selectByPrimaryKey(anyInt())).thenReturn(networkStat);
-        String traceId = CommonUtil.getTraceId();
+        String traceId = CommonUtil.createTraceId();
         target.post(traceId);
 
         networkStat = CollectionNetworkStat.newInstance();
