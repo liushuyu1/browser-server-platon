@@ -1,6 +1,5 @@
 package com.platon.browser;
 
-import com.platon.browser.bean.CommonConstant;
 import com.platon.browser.bean.EpochMessage;
 import com.platon.browser.bean.ReceiptResult;
 import com.platon.browser.bootstrap.bean.InitializationResult;
@@ -18,7 +17,6 @@ import com.platon.protocol.core.methods.response.PlatonBlock;
 import com.ulisesbocchio.jasyptspringboot.annotation.EnableEncryptableProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.annotation.MapperScan;
-import org.slf4j.MDC;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
@@ -113,7 +111,7 @@ public class AgentApplication implements ApplicationRunner {
                 if (preBlockNum != 0L && (collectedNumber - preBlockNum != 1)) {
                     throw new AssertionError();
                 }
-                MDC.remove(CommonConstant.TRACE_ID);
+                CommonUtil.removeTraceId();
             } catch (Exception e) {
                 log.error("程序因错误而停止:", e);
                 break;

@@ -1,8 +1,5 @@
 package com.platon.browser.handler;
 
-import com.platon.browser.bean.CommonConstant;
-import com.platon.browser.utils.CommonUtil;
-import com.platon.protocol.core.methods.response.PlatonBlock;
 import com.lmax.disruptor.EventHandler;
 import com.platon.browser.analyzer.BlockAnalyzer;
 import com.platon.browser.bean.BlockEvent;
@@ -12,8 +9,9 @@ import com.platon.browser.exception.BeanCreateOrUpdateException;
 import com.platon.browser.exception.BlankResponseException;
 import com.platon.browser.exception.ContractInvokeException;
 import com.platon.browser.publisher.CollectionEventPublisher;
+import com.platon.browser.utils.CommonUtil;
+import com.platon.protocol.core.methods.response.PlatonBlock;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 

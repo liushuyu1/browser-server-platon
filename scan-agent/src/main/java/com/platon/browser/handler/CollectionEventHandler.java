@@ -2,7 +2,6 @@ package com.platon.browser.handler;
 
 import com.lmax.disruptor.EventHandler;
 import com.platon.browser.bean.CollectionEvent;
-import com.platon.browser.bean.CommonConstant;
 import com.platon.browser.bean.TxAnalyseResult;
 import com.platon.browser.cache.AddressCache;
 import com.platon.browser.cache.NetworkStatCache;
@@ -23,7 +22,6 @@ import com.platon.browser.service.statistic.StatisticService;
 import com.platon.browser.utils.BakDataDeleteUtil;
 import com.platon.browser.utils.CommonUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.beans.BeanUtils;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
