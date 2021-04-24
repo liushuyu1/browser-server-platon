@@ -64,7 +64,7 @@ public class PersistenceEventHandler implements EventHandler<PersistenceEvent> {
         CommonUtil.putTraceId(event.getTraceId());
         long startTime = System.currentTimeMillis();
         exec(event, sequence, endOfBatch);
-        log.info("处理耗时:{} ms", System.currentTimeMillis() - startTime);
+        log.debug("处理耗时:{} ms", System.currentTimeMillis() - startTime);
         CommonUtil.removeTraceId();
     }
 
