@@ -1,5 +1,6 @@
 package com.platon.browser.handler;
 
+import cn.hutool.core.collection.CollUtil;
 import com.lmax.disruptor.EventHandler;
 import com.platon.browser.bean.PersistenceEvent;
 import com.platon.browser.cache.NetworkStatCache;
@@ -88,23 +89,8 @@ public class PersistenceEventHandler implements EventHandler<PersistenceEvent> {
                 maxBlockNumber = event.getBlock().getNum();
                 return;
             }
-            Map<Object, List<Transaction>> map = transactionStage.stream().collect(Collectors.groupingBy(Transaction::getNum));
-            map.forEach((blockNum, transactions) -> {
-                IntSummaryStatistics erc20Size = transactions.stream().collect(Collectors.summarizingInt(transaction -> transaction.getErc20TxList().size()));
-                IntSummaryStatistics erc721Size = transactions.stream().collect(Collectors.summarizingInt(transaction -> transaction.getErc721TxList().size()));
-                IntSummaryStatistics transferTxSize = transactions.stream().collect(Collectors.summarizingInt(transaction -> transaction.getTransferTxList().size()));
-                IntSummaryStatistics pposTxSize = transactions.stream().collect(Collectors.summarizingInt(transaction -> transaction.getPposTxList().size()));
-                IntSummaryStatistics virtualTransactionSize = transactions.stream().collect(Collectors.summarizingInt(transaction -> transaction.getVirtualTransactions().size()));
-                log.info("入库redis和ES统计:当前块高为[{}],交易数为[{}],erc20交易数为[{}],erc721交易数为[{}],内部转账交易数为[{}],PPOS调用交易数为[{}],虚拟交易数为[{}]",
-                        blockNum,
-                        CommonUtil.ofNullable(() -> transactions.size()).orElse(0),
-                        erc20Size.getSum(),
-                        erc721Size.getSum(),
-                        transferTxSize,
-                        pposTxSize,
-                        virtualTransactionSize
-                );
-            });
+
+            statisticsLog();
 
             // 入库ES 入库节点操作记录到ES
             esImportService.batchImport(blockStage, transactionStage, nodeOptStage, delegationRewardStage);
@@ -149,6 +135,40 @@ public class PersistenceEventHandler implements EventHandler<PersistenceEvent> {
             throw e;
         }
 
+    }
+
+    /**
+     * 打印统计信息
+     *
+     * @param
+     * @return void
+     * @author huangyongpeng@matrixelements.com
+     * @date 2021/4/24
+     */
+    private void statisticsLog() {
+        try {
+            Map<Object, List<Transaction>> map = transactionStage.stream().collect(Collectors.groupingBy(Transaction::getNum));
+            if (CollUtil.isNotEmpty(transactionStage)) {
+                map.forEach((blockNum, transactions) -> {
+                    IntSummaryStatistics erc20Size = transactions.stream().collect(Collectors.summarizingInt(transaction -> transaction.getErc20TxList().size()));
+                    IntSummaryStatistics erc721Size = transactions.stream().collect(Collectors.summarizingInt(transaction -> transaction.getErc721TxList().size()));
+                    IntSummaryStatistics transferTxSize = transactions.stream().collect(Collectors.summarizingInt(transaction -> transaction.getTransferTxList().size()));
+                    IntSummaryStatistics pposTxSize = transactions.stream().collect(Collectors.summarizingInt(transaction -> transaction.getPposTxList().size()));
+                    IntSummaryStatistics virtualTransactionSize = transactions.stream().collect(Collectors.summarizingInt(transaction -> transaction.getVirtualTransactions().size()));
+                    log.info("入库redis和ES统计:当前块高为[{}],交易数为[{}],erc20交易数为[{}],erc721交易数为[{}],内部转账交易数为[{}],PPOS调用交易数为[{}],虚拟交易数为[{}]",
+                            blockNum,
+                            CommonUtil.ofNullable(() -> transactions.size()).orElse(0),
+                            erc20Size.getSum(),
+                            erc721Size.getSum(),
+                            transferTxSize,
+                            pposTxSize,
+                            virtualTransactionSize
+                    );
+                });
+            }
+        } catch (Exception e) {
+            log.error("打印统计信息异常", e);
+        }
     }
 
 }

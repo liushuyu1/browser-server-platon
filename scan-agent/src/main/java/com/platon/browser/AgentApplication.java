@@ -98,7 +98,6 @@ public class AgentApplication implements ApplicationRunner {
                 traceId = CommonUtil.createTraceId();
                 CommonUtil.putTraceId(traceId);
                 preBlockNum = collectedNumber++;
-                log.info("当前采集块高为{}", collectedNumber);
                 // 检查区块号是否合法
                 blockService.checkBlockNumber(collectedNumber);
                 // 异步获取区块
