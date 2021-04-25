@@ -12,9 +12,9 @@ import org.apache.ibatis.annotations.Param;
 
 public interface TokenInventoryMapper {
 
-    long countByExample(TokenInventoryExample example);
+    long countByExample(@Param("example") TokenInventoryExample example);
 
-    int deleteByExample(TokenInventoryExample example);
+    int deleteByExample(@Param("example") TokenInventoryExample example);
 
     int deleteByPrimaryKey(TokenInventoryKey key);
 
@@ -29,9 +29,9 @@ public interface TokenInventoryMapper {
      * @author huangyongpeng@matrixelements.com
      * @date 2021/4/25
      */
-    IPage<TokenInventory> selectByExample(IPage<TokenInventory> page, TokenInventoryExample example);
+    IPage<TokenInventory> selectByExample(IPage<TokenInventory> page, @Param("example") TokenInventoryExample example);
 
-    List<TokenInventory> selectByExample(TokenInventoryExample example);
+    List<TokenInventory> selectByExample(@Param("example") TokenInventoryExample example);
 
     TokenInventory selectByPrimaryKey(TokenInventoryKey key);
 

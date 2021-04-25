@@ -1,11 +1,9 @@
 package com.platon.browser.service;
 
 import cn.hutool.core.util.StrUtil;
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
-import com.platon.browser.bean.CustomToken;
-import com.platon.browser.bean.CustomTokenDetail;
-import com.platon.browser.bean.CustomTokenInventory;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.platon.browser.bean.*;
 import com.platon.browser.config.DownFileCommon;
 import com.platon.browser.dao.entity.TokenInventory;
 import com.platon.browser.dao.entity.TokenInventoryExample;
@@ -30,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -64,9 +63,9 @@ public class TokenService {
     public RespPage<QueryTokenListResp> queryTokenList(QueryTokenListReq req) {
         // page params: #{offset}, #{size}
         RespPage<QueryTokenListResp> result = new RespPage<>();
-        PageHelper.startPage(req.getPageNo(), req.getPageSize());
-        Page<CustomToken> customTokens = customTokenMapper.selectListByType(req.getType());
-        List<QueryTokenListResp> data = customTokens.stream().map(customToken -> QueryTokenListResp.fromToken(customToken)).collect(Collectors.toList());
+        Page<CustomToken> page = new Page<>(req.getPageNo(), req.getPageSize());
+        IPage<CustomToken> customTokens = customTokenMapper.selectListByType(page, req.getType());
+        List<QueryTokenListResp> data = customTokens.getRecords().stream().map(customToken -> QueryTokenListResp.fromToken(customToken)).collect(Collectors.toList());
         result.init(customTokens, data);
         return result;
     }
@@ -86,7 +85,7 @@ public class TokenService {
      */
     public RespPage<QueryTokenIdListResp> queryTokenIdList(QueryTokenIdListReq req) {
         RespPage<QueryTokenIdListResp> result = new RespPage<>();
-        PageHelper.startPage(req.getPageNo(), req.getPageSize());
+        Page<TokenInventory> page = new Page<>(req.getPageNo(), req.getPageSize());
         TokenInventoryExample example = new TokenInventoryExample();
         TokenInventoryExample.Criteria criteria = example.createCriteria();
         //根据地址、合约地址、tokenid去查询列表
@@ -99,9 +98,9 @@ public class TokenService {
         if (StringUtils.isNotBlank(req.getTokenId())) {
             criteria.andTokenIdEqualTo(req.getTokenId());
         }
-        Page<TokenInventory> tokenInventorys = tokenInventoryMapper.selectByExample(example);
+        IPage<TokenInventory> tokenInventorys = tokenInventoryMapper.selectByExample(page, example);
         List<QueryTokenIdListResp> resps = new ArrayList<>();
-        tokenInventorys.forEach(tokenInventory -> {
+        tokenInventorys.getRecords().forEach(tokenInventory -> {
             QueryTokenIdListResp resp = QueryTokenIdListResp.fromToken(tokenInventory);
             resps.add(resp);
         });
@@ -118,7 +117,7 @@ public class TokenService {
     }
 
     public AccountDownload exportTokenId(String address, String contract, String tokenId, String local, String timeZone) {
-        PageHelper.startPage(1, 3000);
+        Page<TokenInventory> page = new Page<>(1, 3000);
         TokenInventoryExample example = new TokenInventoryExample();
         TokenInventoryExample.Criteria criteria = example.createCriteria();
         //根据地址、合约地址、tokenid去查询列表
@@ -131,7 +130,7 @@ public class TokenService {
         if (StringUtils.isNotBlank(tokenId)) {
             criteria.andTokenIdEqualTo(tokenId);
         }
-        Page<TokenInventory> tokenInventorys = tokenInventoryMapper.selectByExample(example);
+        IPage<TokenInventory> tokenInventorys = tokenInventoryMapper.selectByExample(page, example);
         String[] headers = {
                 this.i18n.i(I18nEnum.DOWNLOAD_TOKEN_CSV_NAME, local),
                 this.i18n.i(I18nEnum.DOWNLOAD_TOKEN_CSV_TOKEN, local),
@@ -140,7 +139,7 @@ public class TokenService {
                 this.i18n.i(I18nEnum.DOWNLOAD_TOKEN_CSV_TX_COUNT, local)
         };
         List<Object[]> rows = new ArrayList<>();
-        tokenInventorys.forEach(tokenInventory -> {
+        tokenInventorys.getRecords().forEach(tokenInventory -> {
             Object[] row = {tokenInventory.getName(), tokenInventory.getTokenAddress(), tokenInventory.getOwner()
                     , tokenInventory.getTokenId(), tokenInventory.getTokenTxQty()
             };
