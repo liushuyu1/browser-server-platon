@@ -4,8 +4,8 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.text.StrFormatter;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.platon.browser.bean.CustomAddressDetail;
 import com.platon.browser.bean.RestrictingBalance;
 import com.platon.browser.client.PlatOnClient;
@@ -231,9 +231,9 @@ public class AddressService {
         RpPlanExample.Criteria criteria = rpPlanExample.createCriteria();
         criteria.andAddressEqualTo(req.getAddress());
         List<DetailsRPPlanResp> detailsRPPlanResps = new ArrayList<>();
-        PageHelper.startPage(req.getPageNo(), req.getPageSize());
-        Page<RpPlan> rpPlans = rpPlanMapper.selectByExample(rpPlanExample);
-        for (RpPlan rPlan : rpPlans) {
+        Page<RpPlan> page = new Page<>(req.getPageNo(), req.getPageSize());
+        IPage<RpPlan> rpPlans = rpPlanMapper.selectByExample(page, rpPlanExample);
+        for (RpPlan rPlan : rpPlans.getRecords()) {
             DetailsRPPlanResp detailsRPPlanResp = new DetailsRPPlanResp();
             BeanUtils.copyProperties(rPlan, detailsRPPlanResp);
             /**

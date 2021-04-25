@@ -1,6 +1,5 @@
 dependencies {
-    implementation ("org.mybatis.spring.boot:mybatis-spring-boot-starter:$mybatisSpringbootStarterVersion")
-    compile ("com.github.pagehelper:pagehelper-spring-boot-starter:$pagehelperSpringbootStarterVersion")
+    compile group: 'com.baomidou', name: 'mybatis-plus-boot-starter', version: '3.4.2'
     implementation("org.springframework.boot:spring-boot-starter:$springbootVersion")
     implementation("org.springframework.boot:spring-boot-starter-jdbc:$springbootVersion")
     compile "com.platon.sdk:core:$alayaClientVersion"

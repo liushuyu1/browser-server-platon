@@ -1,6 +1,7 @@
 package com.platon.browser.dao.mapper;
 
-import com.github.pagehelper.Page;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.platon.browser.bean.CustomTokenHolder;
 import com.platon.browser.bean.TokenHolderCount;
 import com.platon.browser.dao.entity.TokenHolder;
@@ -10,19 +11,29 @@ import java.util.List;
 
 public interface CustomTokenHolderMapper {
 
-    Page<CustomTokenHolder> selectListByParams(@Param("tokenAddress") String tokenAddress, @Param("address") String address, @Param("type") String type);
+    /**
+     * @param page         分页对象不能为空,入参IPage和返回结果IPage是同一个对象
+     * @param tokenAddress
+     * @param address
+     * @param type
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.platon.browser.bean.CustomTokenHolder>
+     * @author huangyongpeng@matrixelements.com
+     * @date 2021/4/25
+     */
+    IPage<CustomTokenHolder> selectListByParams(IPage<CustomTokenHolder> page, @Param("tokenAddress") String tokenAddress, @Param("address") String address, @Param("type") String type);
 
     /**
      * 查询erc721令牌数量
      *
+     * @param page         分页对象不能为空,入参IPage和返回结果IPage是同一个对象
      * @param tokenAddress
      * @param address
      * @param type
-     * @return com.github.pagehelper.Page<com.platon.browser.bean.CustomTokenHolder>
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.platon.browser.bean.CustomTokenHolder>
      * @author huangyongpeng@matrixelements.com
-     * @date 2021/4/3
+     * @date 2021/4/25
      */
-    Page<CustomTokenHolder> findErc721TokenHolder(@Param("tokenAddress") String tokenAddress, @Param("address") String address, @Param("type") String type);
+    IPage<CustomTokenHolder> findErc721TokenHolder(IPage<CustomTokenHolder> page, @Param("tokenAddress") String tokenAddress, @Param("address") String address, @Param("type") String type);
 
     int batchInsertOrUpdateSelective(@Param("list") List<TokenHolder> list, @Param("selective") TokenHolder.Column... selective);
 
@@ -49,23 +60,26 @@ public interface CustomTokenHolderMapper {
     /**
      * 查询erc721的TokenHolderList
      *
+     * @param page         分页对象不能为空,入参IPage和返回结果IPage是同一个对象
      * @param tokenAddress
      * @param address
-     * @return com.github.pagehelper.Page<com.platon.browser.bean.CustomTokenHolder>
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.platon.browser.bean.CustomTokenHolder>
      * @author huangyongpeng@matrixelements.com
-     * @date 2021/3/19
+     * @date 2021/4/25
      */
-    Page<CustomTokenHolder> selectListByERC721(@Param("tokenAddress") String tokenAddress, @Param("address") String address);
+    IPage<CustomTokenHolder> selectListByERC721(IPage<CustomTokenHolder> page, @Param("tokenAddress") String tokenAddress, @Param("address") String address);
 
     /**
      * 取余额为0的token holder
+     *
      * @param type
      * @return
      */
     List<TokenHolder> getZeroBalanceTokenHolderList(
-        @Param("type")String type,
-        @Param("offset")int offset,
-        @Param("limit")int limit,
-        @Param("orderby")String orderby
+            @Param("type") String type,
+            @Param("offset") int offset,
+            @Param("limit") int limit,
+            @Param("orderby") String orderby
     );
+
 }

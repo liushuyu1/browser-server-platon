@@ -1,5 +1,6 @@
 package com.platon.browser.dao.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.platon.browser.dao.entity.Address;
 import com.platon.browser.dao.entity.AddressExample;
 import java.util.List;
@@ -19,6 +20,16 @@ public interface AddressMapper {
     List<Address> selectByExampleWithBLOBs(AddressExample example);
 
     List<Address> selectByExample(AddressExample example);
+/**
+ * 分页查询
+ *
+ * @param page 分页对象不能为空,入参IPage和返回结果IPage是同一个对象
+ * @param example
+ * @return IPage<Address>
+ * @author huangyongpeng@matrixelements.com
+ * @date 2021/4/25
+ */
+    IPage<Address> selectByExample(IPage<Address> page, AddressExample example);
 
     Address selectByPrimaryKey(String address);
 

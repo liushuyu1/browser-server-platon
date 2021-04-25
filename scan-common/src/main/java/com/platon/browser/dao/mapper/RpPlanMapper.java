@@ -1,12 +1,16 @@
 package com.platon.browser.dao.mapper;
 
-import com.github.pagehelper.Page;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.platon.browser.dao.entity.RpPlan;
 import com.platon.browser.dao.entity.RpPlanExample;
+
 import java.util.List;
+
 import org.apache.ibatis.annotations.Param;
 
 public interface RpPlanMapper {
+
     long countByExample(RpPlanExample example);
 
     int deleteByExample(RpPlanExample example);
@@ -17,7 +21,16 @@ public interface RpPlanMapper {
 
     int insertSelective(RpPlan record);
 
-    Page<RpPlan> selectByExample(RpPlanExample example);
+    /**
+     * @param page    分页对象不能为空,入参IPage和返回结果IPage是同一个对象
+     * @param example
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.platon.browser.dao.entity.RpPlan>
+     * @author huangyongpeng@matrixelements.com
+     * @date 2021/4/25
+     */
+    IPage<RpPlan> selectByExample(IPage<RpPlan> page, RpPlanExample example);
+
+    List<RpPlan> selectByExample(RpPlanExample example);
 
     RpPlan selectByPrimaryKey(Long id);
 
@@ -45,5 +58,6 @@ public interface RpPlanMapper {
      * @mbg.generated
      * @project https://github.com/itfsw/mybatis-generator-plugin
      */
-    int batchInsertSelective(@Param("list") List<RpPlan> list, @Param("selective") RpPlan.Column ... selective);
+    int batchInsertSelective(@Param("list") List<RpPlan> list, @Param("selective") RpPlan.Column... selective);
+
 }

@@ -5,7 +5,7 @@
   <resultMap id="BaseResultMap" type="com.platon.browser.dao.entity.Node" extends="com.platon.browser.dao.mapper.NodeMapper.BaseResultMap"/>
   <sql id="Example_Where_Clause">
     <where>
-      <foreach collection="oredCriteria" item="criteria" separator="or">
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
         <if test="criteria.valid">
           <trim prefix="(" prefixOverrides="and" suffix=")">
             <foreach collection="criteria.criteria" item="criterion">
@@ -44,7 +44,7 @@
   </select>
   <select id="selectListByExample" parameterType="com.platon.browser.dao.entity.NodeExample" resultMap="BaseResultMap">
     select
-    <if test="distinct">
+    <if test="example.distinct">
       distinct
     </if>
     <include refid="Column_List" />
@@ -52,7 +52,7 @@
     <if test="_parameter != null">
       <include refid="Example_Where_Clause" />
     </if>
-    <if test="orderByClause != null">
+    <if test="example.orderByClause != null">
       order by ${orderByClause}
     </if>
   </select>
