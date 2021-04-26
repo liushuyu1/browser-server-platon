@@ -98,13 +98,7 @@ public class ErcTokenUpdateTask {
 
     private static final ExecutorService HOLDER_UPDATE_POOL = Executors.newFixedThreadPool(HOLDER_BATCH_SIZE);
 
-    private static final ExecutorService INCREMENT_HOLDER_UPDATE_POOL = Executors.newFixedThreadPool(HOLDER_BATCH_SIZE);
-
     private static final int INVENTORY_BATCH_SIZE = 10;
-
-    private static final ExecutorService INVENTORY_UPDATE_POOL = Executors.newFixedThreadPool(INVENTORY_BATCH_SIZE);
-
-    private static final ExecutorService INCREMENT_INVENTORY_UPDATE_POOL = Executors.newFixedThreadPool(INVENTORY_BATCH_SIZE);
 
     private final static OkHttpClient client = new OkHttpClient.Builder()
             .connectionPool(new ConnectionPool(50, 5, TimeUnit.MINUTES))
@@ -171,7 +165,9 @@ public class ErcTokenUpdateTask {
         lock.lock();
         try {
             CommonUtil.putTraceId();
+            log.error("=======token的总供应量全量更新开始===========");
             this.updateTokenTotalSupply();
+            log.error("=======token的总供应量全量更新结束===========");
         } catch (Exception e) {
             log.error("全量更新token的总供应量异常", e);
         } finally {
@@ -292,8 +288,10 @@ public class ErcTokenUpdateTask {
         if (tokenHolderLock.tryLock()) {
             try {
                 CommonUtil.putTraceId();
+                log.error("=======更新token持有者余额增量更新开始===========");
                 incrementUpdateTokenHolderBalance(esErc20TxRepository, ErcTypeEnum.ERC20, this.getErc20TxSeq());
                 incrementUpdateTokenHolderBalance(esErc721TxRepository, ErcTypeEnum.ERC721, this.getErc721TxSeq());
+                log.error("=======更新token持有者余额增量更新结束===========");
             } catch (Exception e) {
                 log.error("增量更新token持有者余额异常", e);
             } finally {
@@ -356,38 +354,6 @@ public class ErcTokenUpdateTask {
             });
 
             if (MapUtil.isNotEmpty(map)) {
-//                AtomicInteger size = new AtomicInteger();
-//                map.forEach((k, v) -> {
-//                    size.addAndGet(v.size());
-//                });
-//
-//                CountDownLatch latch = new CountDownLatch(size.get());
-//                map.forEach((contract, addressSet) -> {
-//                    addressSet.forEach(address -> {
-//                        INCREMENT_HOLDER_UPDATE_POOL.submit(() -> {
-//                            try {
-//                                BigInteger balance = ercServiceImpl.getBalance(contract, typeEnum, address);
-//                                TokenHolder holder = new TokenHolder();
-//                                holder.setTokenAddress(contract);
-//                                holder.setAddress(address);
-//                                holder.setBalance(new BigDecimal(balance));
-//                                holder.setUpdateTime(DateUtil.date());
-//                                updateParams.add(holder);
-//                            } catch (Exception e) {
-//                                log.error(StrFormatter.format("查询地址余额失败,contract:{},address:{}", contract, address), e);
-//                            } finally {
-//                                latch.countDown();
-//                            }
-//                        });
-//                    });
-//                });
-//                try {
-//                    latch.await();
-//                } catch (InterruptedException e) {
-//                    log.error("", e);
-//                }
-
-
                 // 串行查余额
                 map.forEach((contract, addressSet) -> {
                     addressSet.forEach(address -> {
@@ -429,6 +395,7 @@ public class ErcTokenUpdateTask {
             return;
         }
         CommonUtil.putTraceId();
+        log.error("=======更新token持有者余额全量更新开始===========");
         try {
             tokenHolderLock.lock();
             // 分页更新holder的balance
@@ -478,6 +445,7 @@ public class ErcTokenUpdateTask {
         } finally {
             tokenHolderLock.unlock();
         }
+        log.error("=======更新token持有者余额全量更新结束===========");
         CommonUtil.removeTraceId();
     }
 
@@ -495,8 +463,10 @@ public class ErcTokenUpdateTask {
         tokenInventoryLock.lock();
         try {
             CommonUtil.putTraceId();
-            updateTokenInventory(INVENTORY_UPDATE_POOL, 0, false);
+            log.error("=======更新token库存信息全量更新开始===========");
+            updateTokenInventory(0, false);
             tokenInventoryUpdate.update(0, false, 0);
+            log.error("=======更新token库存信息全量更新结束===========");
         } catch (Exception e) {
             log.error("更新token库存信息", e);
         } finally {
@@ -519,7 +489,9 @@ public class ErcTokenUpdateTask {
         if (tokenInventoryLock.tryLock()) {
             try {
                 CommonUtil.putTraceId();
-                updateTokenInventory(INCREMENT_INVENTORY_UPDATE_POOL, this.getTokenInventoryPage(), true);
+                log.error("=======更新token库存信息增量更新开始===========");
+                updateTokenInventory(this.getTokenInventoryPage(), true);
+                log.error("=======更新token库存信息增量更新结束===========");
             } catch (Exception e) {
                 log.error("增量更新token库存信息异常", e);
             } finally {
@@ -534,14 +506,13 @@ public class ErcTokenUpdateTask {
     /**
      * 更新token库存信息
      *
-     * @param pool        线程池
      * @param pageNum     当前页码
      * @param isIncrement 是否增量更新
      * @return void
      * @author huangyongpeng@matrixelements.com
      * @date 2021/2/2
      */
-    public void updateTokenInventory(ExecutorService pool, int pageNum, boolean isIncrement) {
+    public void updateTokenInventory(int pageNum, boolean isIncrement) {
         // 只有程序正常运行才执行任务
         if (!AppStatusUtil.isRunning()) {
             return;
@@ -598,10 +569,10 @@ public class ErcTokenUpdateTask {
                                         log.error("token_address[{}] token_id[{}] tokenURI [{}] 不存在", inventory.getTokenAddress(), inventory.getTokenId(), tokenURI);
                                     }
                                 } catch (Exception e) {
-                                    log.error(StrFormatter.format("请求TokenURI异常，token_address：{},token_id:{}", inventory.getTokenAddress(), inventory.getTokenId()), e);
+                                    log.error(StrUtil.format("请求TokenURI异常，token_address：{},token_id:{},tokenURI:{}", inventory.getTokenAddress(), inventory.getTokenId(), tokenURI), e);
                                 }
                             } else {
-                                log.error("请求TokenURI为空，token_address：{},token_id:{}", inventory.getTokenAddress(), inventory.getTokenId());
+                                log.error("请求TokenURI为空，token_address：{},token_id:{},tokenURI:{}", inventory.getTokenAddress(), inventory.getTokenId(), tokenURI);
                             }
                         } catch (Exception e) {
                             log.error("更新token库存信息异常", e);
@@ -618,7 +589,7 @@ public class ErcTokenUpdateTask {
                 }
                 if (!updateParams.isEmpty()) {
                     customTokenInventoryMapper.batchInsertOrUpdateSelective(updateParams, TokenInventory.Column.values());
-                    log.info("更新token库存信息{}，标识为{}", JSONUtil.toJsonStr(updateParams), page);
+                    log.info("更新token库存信息{},标识为{},更新条数为{}", JSONUtil.toJsonStr(updateParams), page, updateParams.size());
                 }
                 if (isIncrement) {
                     incrementTokenInventoryUpdate.update(pageNum, true, batch.size());
