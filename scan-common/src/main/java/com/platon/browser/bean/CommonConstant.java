@@ -13,4 +13,19 @@ public class CommonConstant {
      */
     public static final String TRACE_ID = "trace-id";
 
+    /**
+     * 请求参数链路ID名
+     */
+    public static final String REQ_TRACE_ID = "traceId";
+
+    /**
+     * es默认查询页码
+     */
+    public static final Integer ES_PAGE_NUM = 1;
+
+    /**
+     * es默认查询条数
+     */
+    public static final Integer ES_PAGE_SIZE = 30000;
+
 }

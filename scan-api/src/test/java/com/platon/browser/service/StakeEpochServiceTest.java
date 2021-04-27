@@ -1,7 +1,7 @@
 package com.platon.browser.service;
 
 
-import com.github.pagehelper.Page;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.platon.browser.ApiTestMockBase;
 import com.platon.browser.bean.CustomStaking;
 import com.platon.browser.bean.DelegationAddress;
@@ -73,9 +73,9 @@ public class StakeEpochServiceTest extends ApiTestMockBase {
         HistoryStakingListReq req = new HistoryStakingListReq();
         req.setKey("test");
 
-        Page<Node> nodeListPage = new Page<>();
-        nodeListPage.addAll(this.nodeList);
-        when(this.customNodeMapper.selectListByExample(any())).thenReturn(nodeListPage);
+//        Page<Node> nodeListPage = new Page<>();
+//        nodeListPage.addAll(this.nodeList);
+//        when(this.customNodeMapper.selectListByExample(any())).thenReturn(nodeListPage);
         this.target.historyStakingList(req);
         AliveStakingListReq aliveStakingListReq = new AliveStakingListReq();
         aliveStakingListReq.setQueryStatus("all");
@@ -124,7 +124,7 @@ public class StakeEpochServiceTest extends ApiTestMockBase {
         stakingOptRecordListReq.setNodeId("test");
         stakingOptRecordListReq.setPageNo(2);
         stakingOptRecordListReq.setPageSize(3);
-        stakingOptRecordListReq.setPager(new Page<>());
+        //stakingOptRecordListReq.setPager(new Page<>());
         ESResult<Object> items = new ESResult<>();
         List<Object> opts = new ArrayList<>();
         NodeOpt nodeOpt = new NodeOpt();
@@ -135,7 +135,7 @@ public class StakeEpochServiceTest extends ApiTestMockBase {
         nodeOpt.setTime(new Date());
         nodeOpt.setDesc("test|4|3|4|5");
         nodeOpt.setType(Integer.parseInt(NodeOpt.TypeEnum.PROPOSALS.getCode()));
-        when(this.ESNodeOptRepository.search(any(),any(),anyInt(),anyInt())).thenReturn(items);
+        when(this.ESNodeOptRepository.search(any(), any(), anyInt(), anyInt())).thenReturn(items);
         this.target.stakingOptRecordList(stakingOptRecordListReq);
 
         nodeOpt.setType(Integer.parseInt(NodeOpt.TypeEnum.VOTE.getCode()));
@@ -152,41 +152,42 @@ public class StakeEpochServiceTest extends ApiTestMockBase {
 
         assertTrue(true);
     }
-    
+
     @Test
-	public void testStakingStatisticNew() {
-		when(this.customStakingMapper.selectCountByActive()).thenReturn(10);
-		StakingStatisticNewResp resp = this.target.stakingStatisticNew();
-		assertNotNull(resp);
-	}
-    
-    @Test
-	public void testDelegationListByStaking() {
-    	DelegationListByStakingReq req = new DelegationListByStakingReq();
-    	Page<DelegationStaking> delegationStakingPage = new Page<DelegationStaking>();
-    	List<DelegationStaking> delegationStakings = new ArrayList<DelegationStaking>();
-    	DelegationStaking delegationStaking = new DelegationStaking();
-    	delegationStaking.setDelegateHes(BigDecimal.TEN);
-    	delegationStaking.setDelegateLocked(BigDecimal.TEN);
-    	delegationStakings.add(delegationStaking);
-    	delegationStakingPage.add(delegationStaking);
-    	when(this.customDelegationMapper.selectStakingByNodeId(any())).thenReturn(delegationStakingPage);
-    	RespPage<DelegationListByStakingResp> resp = this.target.delegationListByStaking(req);
-    	assertNotNull(resp);
+    public void testStakingStatisticNew() {
+        when(this.customStakingMapper.selectCountByActive()).thenReturn(10);
+        StakingStatisticNewResp resp = this.target.stakingStatisticNew();
+        assertNotNull(resp);
     }
-    
+
     @Test
-	public void testDelegationListByAddress() {
-    	DelegationListByAddressReq req = new DelegationListByAddressReq();
-    	Page<DelegationAddress> delegationAddressPage = new Page<DelegationAddress>();
-    	List<DelegationAddress> delegationAddresses = new ArrayList<DelegationAddress>();
-    	DelegationAddress delegationAddress = new DelegationAddress();
-    	delegationAddress.setDelegateHes(BigDecimal.TEN);
-    	delegationAddress.setDelegateLocked(BigDecimal.TEN);
-    	delegationAddresses.add(delegationAddress);
-    	delegationAddressPage.add(delegationAddress);
-    	when(this.customDelegationMapper.selectAddressByAddr(any())).thenReturn(delegationAddressPage);
-    	RespPage<DelegationListByAddressResp> resp = this.target.delegationListByAddress(req);
-    	assertNotNull(resp);
+    public void testDelegationListByStaking() {
+        DelegationListByStakingReq req = new DelegationListByStakingReq();
+        Page<DelegationStaking> delegationStakingPage = new Page<DelegationStaking>();
+        List<DelegationStaking> delegationStakings = new ArrayList<DelegationStaking>();
+        DelegationStaking delegationStaking = new DelegationStaking();
+        delegationStaking.setDelegateHes(BigDecimal.TEN);
+        delegationStaking.setDelegateLocked(BigDecimal.TEN);
+        delegationStakings.add(delegationStaking);
+        //delegationStakingPage.add(delegationStaking);
+        //when(this.customDelegationMapper.selectStakingByNodeId(any())).thenReturn(delegationStakingPage);
+        RespPage<DelegationListByStakingResp> resp = this.target.delegationListByStaking(req);
+        assertNotNull(resp);
     }
+
+    @Test
+    public void testDelegationListByAddress() {
+        DelegationListByAddressReq req = new DelegationListByAddressReq();
+        Page<DelegationAddress> delegationAddressPage = new Page<DelegationAddress>();
+        List<DelegationAddress> delegationAddresses = new ArrayList<DelegationAddress>();
+        DelegationAddress delegationAddress = new DelegationAddress();
+        delegationAddress.setDelegateHes(BigDecimal.TEN);
+        delegationAddress.setDelegateLocked(BigDecimal.TEN);
+        delegationAddresses.add(delegationAddress);
+        //delegationAddressPage.add(delegationAddress);
+        //when(this.customDelegationMapper.selectAddressByAddr(any())).thenReturn(delegationAddressPage);
+        RespPage<DelegationListByAddressResp> resp = this.target.delegationListByAddress(req);
+        assertNotNull(resp);
+    }
+
 }

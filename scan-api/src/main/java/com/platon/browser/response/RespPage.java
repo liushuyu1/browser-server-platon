@@ -1,6 +1,7 @@
 package com.platon.browser.response;
 
-import com.github.pagehelper.Page;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,7 +43,7 @@ public class RespPage<T> {
     /**
      * 初始化数据
      */
-    public void init(Page<?> page, List<T> data) {
+    public void init(IPage<?> page, List<T> data) {
         this.setTotalCount(page.getTotal());
         this.setTotalPages(page.getPages());
         this.setDisplayTotalCount(page.getTotal());

@@ -1,11 +1,15 @@
 package com.platon.browser.dao.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.platon.browser.dao.entity.Node;
 import com.platon.browser.dao.entity.NodeExample;
+
 import java.util.List;
+
 import org.apache.ibatis.annotations.Param;
 
 public interface NodeMapper {
+
     long countByExample(NodeExample example);
 
     int deleteByExample(NodeExample example);
@@ -19,6 +23,15 @@ public interface NodeMapper {
     List<Node> selectByExampleWithBLOBs(NodeExample example);
 
     List<Node> selectByExample(NodeExample example);
+
+    /**
+     * @param page    分页对象不能为空,入参IPage和返回结果IPage是同一个对象
+     * @param example
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.platon.browser.dao.entity.Node>
+     * @author huangyongpeng@matrixelements.com
+     * @date 2021/4/25
+     */
+    IPage<Node> selectByExample(IPage<Node> page, NodeExample example);
 
     Node selectByPrimaryKey(String nodeId);
 
@@ -50,5 +63,6 @@ public interface NodeMapper {
      * @mbg.generated
      * @project https://github.com/itfsw/mybatis-generator-plugin
      */
-    int batchInsertSelective(@Param("list") List<Node> list, @Param("selective") Node.Column ... selective);
+    int batchInsertSelective(@Param("list") List<Node> list, @Param("selective") Node.Column... selective);
+
 }

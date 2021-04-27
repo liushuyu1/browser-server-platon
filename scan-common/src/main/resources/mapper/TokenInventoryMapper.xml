@@ -17,7 +17,7 @@
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
-      <foreach collection="oredCriteria" item="criteria" separator="or">
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
         <if test="criteria.valid">
           <trim prefix="(" prefixOverrides="and" suffix=")">
             <foreach collection="criteria.criteria" item="criterion">
@@ -79,7 +79,7 @@
   </sql>
   <select id="selectByExample" parameterType="com.platon.browser.dao.entity.TokenInventoryExample" resultMap="BaseResultMap">
     select
-    <if test="distinct">
+    <if test="example.distinct">
       distinct
     </if>
     <include refid="Base_Column_List" />
@@ -87,8 +87,8 @@
     <if test="_parameter != null">
       <include refid="Example_Where_Clause" />
     </if>
-    <if test="orderByClause != null">
-      order by ${orderByClause}
+    <if test="example.orderByClause != null">
+      order by ${example.orderByClause}
     </if>
   </select>
   <select id="selectByPrimaryKey" parameterType="com.platon.browser.dao.entity.TokenInventoryKey" resultMap="BaseResultMap">

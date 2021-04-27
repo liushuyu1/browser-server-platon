@@ -1,5 +1,6 @@
 package com.platon.browser.dao.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.platon.browser.dao.entity.Delegation;
 import com.platon.browser.dao.entity.DelegationExample;
 import com.platon.browser.dao.entity.DelegationKey;
@@ -21,6 +22,15 @@ public interface DelegationMapper {
     int insertSelective(Delegation record);
 
     List<Delegation> selectByExample(DelegationExample example);
+
+    /**
+     * @param page    分页对象不能为空,入参IPage和返回结果IPage是同一个对象
+     * @param example
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.platon.browser.dao.entity.Delegation>
+     * @author huangyongpeng@matrixelements.com
+     * @date 2021/4/25
+     */
+    IPage<Delegation> selectByExample(IPage<Delegation> page, DelegationExample example);
 
     Delegation selectByPrimaryKey(DelegationKey key);
 

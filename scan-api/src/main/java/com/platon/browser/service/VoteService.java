@@ -1,7 +1,7 @@
 package com.platon.browser.service;
 
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.platon.browser.dao.entity.Vote;
 import com.platon.browser.dao.entity.VoteExample;
 import com.platon.browser.dao.mapper.VoteMapper;
@@ -27,11 +27,12 @@ import java.util.List;
  */
 @Service
 public class VoteService {
+
     @Resource
     private VoteMapper voteMapper;
 
     public RespPage<VoteListResp> queryByProposal(VoteListRequest voteListRequest) {
-        Page<?> page = PageHelper.startPage(voteListRequest.getPageNo(), voteListRequest.getPageSize(), true);
+        Page<Vote> page = new Page<>(voteListRequest.getPageNo(), voteListRequest.getPageSize());
         /**
          * 根据时间戳倒序查询hash值
          */
@@ -43,14 +44,14 @@ public class VoteService {
             criteria.andOptionEqualTo(Integer.parseInt(voteListRequest.getOption()));
         }
         /** 分页根据提案hash查询投票列表 */
-        List<Vote> votes = voteMapper.selectByExample(voteExample);
+        IPage<Vote> votes = voteMapper.selectByExample(page, voteExample);
         RespPage<VoteListResp> respPage = new RespPage<>();
-        if (!CollectionUtils.isEmpty(votes)) {
-            List<VoteListResp> voteListResps = new ArrayList<>(votes.size());
-            votes.forEach(vote -> {
-            	/**
-            	 * 循环匹配数据
-            	 */
+        if (!CollectionUtils.isEmpty(votes.getRecords())) {
+            List<VoteListResp> voteListResps = new ArrayList<>(votes.getRecords().size());
+            votes.getRecords().forEach(vote -> {
+                /**
+                 * 循环匹配数据
+                 */
                 VoteListResp resp = new VoteListResp();
                 BeanUtils.copyProperties(vote, resp);
                 resp.setVoter(vote.getNodeId());

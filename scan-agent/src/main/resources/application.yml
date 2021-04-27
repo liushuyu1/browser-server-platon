@@ -2,7 +2,7 @@
 # 应用版本
 version: 1.0.0.0
 spring:
-  application.name: browser-agent
+  application.name: scan-agent
   #数据源配置
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
@@ -36,7 +36,7 @@ spring:
       erc20TxIndexName: ${platon.es-namespace}_erc20_tx
       erc721TxIndexName: ${platon.es-namespace}_erc721_tx
 # MyBatis配置（注意：一定要对应mapper映射xml文件的所在路径）
-mybatis:
+mybatis-plus:
   mapper-locations: classpath*:mapper/*.xml
   # 实体类别名配置（注意：对应实体类的路径）
   type-aliases-package: com.platon.browser.dao.entity

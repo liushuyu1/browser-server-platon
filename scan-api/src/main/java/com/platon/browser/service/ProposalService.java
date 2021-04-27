@@ -1,9 +1,9 @@
 package com.platon.browser.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.platon.browser.utils.NetworkParams;
 import com.platon.utils.Convert;
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
 import com.platon.browser.bean.CustomProposal;
 import com.platon.browser.config.BlockChainConfig;
 import com.platon.browser.constant.Browser;
@@ -52,40 +52,47 @@ import java.util.Objects;
  */
 @Service
 public class ProposalService {
+
     Logger logger = LoggerFactory.getLogger(ProposalService.class);
+
     @Resource
     private I18nUtil i18n;
+
     @Resource
     private ProposalMapper proposalMapper;
+
     @Resource
     private StatisticCacheService statisticCacheService;
+
     @Resource
     private BlockChainConfig blockChainConfig;
+
     @Resource
     private EsBlockRepository ESBlockRepository;
+
     @Resource
     private NetworkParams networkParams;
 
     public RespPage<ProposalListResp> list(PageReq req) {
         RespPage<ProposalListResp> respPage = new RespPage<>();
         req = req == null ? new PageReq() : req;
-        Page<?> page = PageHelper.startPage(req.getPageNo(), req.getPageSize(), true);
+        Page<Proposal> page = new Page<>(req.getPageNo(), req.getPageSize());
         /** 暂时不显示总人数为0的数据，不然页面展示投票百分比事会出错   */
         ProposalExample proposalExample = new ProposalExample();
         proposalExample.setOrderByClause(" timestamp desc");
         ProposalExample.Criteria criteria = proposalExample.createCriteria();
         criteria.andAccuVerifiersNotEqualTo(0l);
-        List<Proposal> list = proposalMapper.selectByExample(proposalExample);
+        IPage<Proposal> list = proposalMapper.selectByExample(page, proposalExample);
         /** 分页查询提案数据 */
-        if (!CollectionUtils.isEmpty(list)) {
-            List<ProposalListResp> listResps = new ArrayList<>(list.size());
-            for (Proposal proposal : list) {
-            	/**
-            	 * 循环转换数据
-            	 */
-            	ProposalListResp proposalListResp = new ProposalListResp();
+        if (!CollectionUtils.isEmpty(list.getRecords())) {
+            List<ProposalListResp> listResps = new ArrayList<>(list.getRecords().size());
+            for (Proposal proposal : list.getRecords()) {
+                /**
+                 * 循环转换数据
+                 */
+                ProposalListResp proposalListResp = new ProposalListResp();
                 BeanUtils.copyProperties(proposal, proposalListResp);
-                proposalListResp.setTopic(Browser.INQUIRY.equals(proposal.getTopic())?"":proposal.getTopic());
+                proposalListResp.setTopic(Browser.INQUIRY.equals(proposal.getTopic()) ? "" : proposal.getTopic());
                 proposalListResp.setProposalHash(proposal.getHash());
                 proposalListResp.setEndVotingBlock(String.valueOf(proposal.getEndVotingBlock()));
                 proposalListResp.setType(String.valueOf(proposal.getType()));
@@ -105,7 +112,7 @@ public class ProposalService {
     }
 
     public BaseResp<ProposalDetailsResp> get(ProposalDetailRequest req) {
-    	/** 根据hash查询提案 */
+        /** 根据hash查询提案 */
         Proposal proposal = proposalMapper.selectByPrimaryKey(req.getProposalHash());
         if (Objects.isNull(proposal)) {
             logger.error("## ERROR # get record not exist proposalHash:{}", req.getProposalHash());

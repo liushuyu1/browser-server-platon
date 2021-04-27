@@ -1,11 +1,16 @@
 package com.platon.browser.dao.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.platon.browser.dao.entity.Proposal;
 import com.platon.browser.dao.entity.ProposalExample;
+
 import java.util.List;
+
 import org.apache.ibatis.annotations.Param;
 
 public interface ProposalMapper {
+
     long countByExample(ProposalExample example);
 
     int deleteByExample(ProposalExample example);
@@ -15,6 +20,15 @@ public interface ProposalMapper {
     int insert(Proposal record);
 
     int insertSelective(Proposal record);
+
+    /**
+     * @param page    分页对象不能为空,入参IPage和返回结果IPage是同一个对象
+     * @param example
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.platon.browser.dao.entity.Proposal>
+     * @author huangyongpeng@matrixelements.com
+     * @date 2021/4/25
+     */
+    IPage<Proposal> selectByExample(IPage<Proposal> page, ProposalExample example);
 
     List<Proposal> selectByExample(ProposalExample example);
 
@@ -44,5 +58,6 @@ public interface ProposalMapper {
      * @mbg.generated
      * @project https://github.com/itfsw/mybatis-generator-plugin
      */
-    int batchInsertSelective(@Param("list") List<Proposal> list, @Param("selective") Proposal.Column ... selective);
+    int batchInsertSelective(@Param("list") List<Proposal> list, @Param("selective") Proposal.Column... selective);
+
 }

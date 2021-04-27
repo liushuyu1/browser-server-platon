@@ -2,6 +2,7 @@ package com.platon.browser.service.erc;
 
 import cn.hutool.core.text.StrFormatter;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.platon.browser.client.PlatOnClient;
 import com.platon.browser.config.BlockChainConfig;
 import com.platon.browser.exception.BusinessException;
@@ -119,13 +120,12 @@ public class ErcServiceImpl {
     public String getTokenURI(String contractAddress, BigInteger tokenId) {
         String tokenURI = "";
         try {
-            ErcContractId ercContractId = ercDetectService.getContractId(contractAddress);
-            ErcContract ercContract = getErcContract(contractAddress, ercContractId.getTypeEnum());
+            ErcContract ercContract = getErcContract(contractAddress, ErcTypeEnum.ERC721);
             if (ObjectUtil.isNotNull(ercContract)) {
                 tokenURI = ercContract.getTokenURI(tokenId).send();
             }
         } catch (Exception e) {
-            log.error(StrFormatter.format("getTokenURI异常，token_address：{},token_id:{}", contractAddress, tokenId), e);
+            log.error(StrUtil.format("getTokenURI异常，token_address：{},token_id:{}", contractAddress, tokenId), e);
         }
         return tokenURI;
     }

@@ -2,8 +2,8 @@ package com.platon.browser.service;
 
 import com.platon.browser.utils.TransactionUtil;
 import com.platon.contracts.ppos.dto.resp.Reward;
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.platon.browser.bean.CustomDelegation.YesNoEnum;
 import com.platon.browser.bean.CustomStaking;
 import com.platon.browser.bean.CustomStaking.StatusEnum;
@@ -31,8 +31,13 @@ import com.platon.browser.request.staking.*;
 import com.platon.browser.response.BaseResp;
 import com.platon.browser.response.RespPage;
 import com.platon.browser.response.staking.*;
-import com.platon.browser.utils.I18nUtil;
+import com.platon.browser.service.elasticsearch.EsNodeOptRepository;
+import com.platon.browser.service.elasticsearch.bean.ESResult;
+import com.platon.browser.service.elasticsearch.query.ESQueryBuilderConstructor;
+import com.platon.browser.service.elasticsearch.query.ESQueryBuilders;
 import com.platon.browser.utils.HexUtil;
+import com.platon.browser.utils.I18nUtil;
+import com.platon.contracts.ppos.dto.resp.Reward;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,10 +114,8 @@ public class StakingService {
     }
 
     public RespPage<AliveStakingListResp> aliveStakingList(AliveStakingListReq req) {
-        PageHelper.startPage(req.getPageNo(), req.getPageSize());
         Integer status = null;
         Integer isSettle = null;
-
         // 是否需要把退出中状态的节点当做活跃中处理，默认不需要，只有在查询全部或活跃中时需要把退出中状态当作活跃中
         boolean exitingAsActive = false;
         /**
@@ -164,9 +167,9 @@ public class StakingService {
             criteria2.andIsSettleEqualTo(CustomStaking.YesNoEnum.YES.getCode());
             nodeExample.or(criteria2);
         }
-
-        Page<Node> stakingPage = customNodeMapper.selectListByExample(nodeExample);
-        List<Node> stakings = stakingPage.getResult();
+        Page<Node> page = new Page<>(req.getPageNo(), req.getPageSize());
+        IPage<Node> stakingPage = customNodeMapper.selectListByExample(page, nodeExample);
+        List<Node> stakings = stakingPage.getRecords();
         /** 查询出块节点 */
         NetworkStat networkStatRedis = statisticCacheService.getNetworkStatCache();
         int i = (req.getPageNo() - 1) * req.getPageSize();
@@ -200,15 +203,12 @@ public class StakingService {
             lists.add(aliveStakingListResp);
             i++;
         }
-        Page<?> page = new Page<>(req.getPageNo(), req.getPageSize());
-        page.setTotal(stakingPage.getTotal());
         respPage.init(page, lists);
         return respPage;
     }
 
     public RespPage<HistoryStakingListResp> historyStakingList(HistoryStakingListReq req) {
         /** 设置只查询退出中和已退出 */
-        PageHelper.startPage(req.getPageNo(), req.getPageSize());
         List<Integer> status = new ArrayList<>();
         status.add(CustomStaking.StatusEnum.EXITING.getCode());
         status.add(CustomStaking.StatusEnum.EXITED.getCode());
@@ -227,9 +227,9 @@ public class StakingService {
         if (StringUtils.isNotBlank(req.getKey())) {
             criteria.andNodeNameLike("%" + req.getKey() + "%");
         }
-        Page<Node> stakings = customNodeMapper.selectListByExample(nodeExample);
-
-        for (Node stakingNode : stakings.getResult()) {
+        Page<Node> page = new Page<>(req.getPageNo(), req.getPageSize());
+        IPage<Node> stakings = customNodeMapper.selectListByExample(page, nodeExample);
+        for (Node stakingNode : stakings.getRecords()) {
             HistoryStakingListResp historyStakingListResp = new HistoryStakingListResp();
             BeanUtils.copyProperties(stakingNode, historyStakingListResp);
             if (stakingNode.getLeaveTime() != null) {
@@ -252,8 +252,6 @@ public class StakingService {
 
             lists.add(historyStakingListResp);
         }
-        Page<?> page = new Page<>(req.getPageNo(), req.getPageSize());
-        page.setTotal(stakings.getTotal());
         respPage.init(page, lists);
         return respPage;
     }
@@ -441,11 +439,11 @@ public class StakingService {
 
     public RespPage<DelegationListByStakingResp> delegationListByStaking(DelegationListByStakingReq req) {
         Node node = nodeMapper.selectByPrimaryKey(req.getNodeId());
-        PageHelper.startPage(req.getPageNo(), req.getPageSize());
         List<DelegationListByStakingResp> lists = new LinkedList<>();
+        Page<DelegationStaking> page = new Page<>(req.getPageNo(), req.getPageSize());
         /** 根据节点id和区块查询验证委托信息 */
-        Page<DelegationStaking> delegationStakings = customDelegationMapper.selectStakingByNodeId(req.getNodeId());
-        for (DelegationStaking delegationStaking : delegationStakings.getResult()) {
+        IPage<DelegationStaking> delegationStakings = customDelegationMapper.selectStakingByNodeId(page, req.getNodeId());
+        for (DelegationStaking delegationStaking : delegationStakings.getRecords()) {
             DelegationListByStakingResp byStakingResp = new DelegationListByStakingResp();
             BeanUtils.copyProperties(delegationStaking, byStakingResp);
             byStakingResp.setDelegateAddr(delegationStaking.getDelegateAddr());
@@ -460,24 +458,22 @@ public class StakingService {
             lists.add(byStakingResp);
         }
         /** 分页统计总数 */
-        Page<?> page = new Page<>(req.getPageNo(), req.getPageSize());
-        page.setTotal(delegationStakings.getTotal());
         RespPage<DelegationListByStakingResp> respPage = new RespPage<>();
         respPage.init(page, lists);
         return respPage;
     }
 
     public RespPage<DelegationListByAddressResp> delegationListByAddress(DelegationListByAddressReq req) {
-        PageHelper.startPage(req.getPageNo(), req.getPageSize());
+        Page<DelegationAddress> page = new Page<>(req.getPageNo(), req.getPageSize());
         List<DelegationListByAddressResp> lists = new LinkedList<>();
         /** 根据地址分页查询委托列表 */
-        Page<DelegationAddress> delegationAddresses =
-                customDelegationMapper.selectAddressByAddr(req.getAddress());
+        IPage<DelegationAddress> delegationAddresses =
+                customDelegationMapper.selectAddressByAddr(page, req.getAddress());
         /**
          * 初始化奖励节点id列表，用来后续查询对应的待领取奖励使用
          */
         List<String> nodes = new ArrayList<>();
-        for (DelegationAddress delegationAddress : delegationAddresses.getResult()) {
+        for (DelegationAddress delegationAddress : delegationAddresses.getRecords()) {
             nodes.add(delegationAddress.getNodeId());
         }
         /**
@@ -490,7 +486,7 @@ public class StakingService {
             logger.error("获取奖励数据错误：{}", e.getMessage());
             rewards = new ArrayList<>();
         }
-        for (DelegationAddress delegationAddress : delegationAddresses.getResult()) {
+        for (DelegationAddress delegationAddress : delegationAddresses.getRecords()) {
             DelegationListByAddressResp byAddressResp = new DelegationListByAddressResp();
             BeanUtils.copyProperties(delegationAddress, byAddressResp);
             byAddressResp.setDelegateHas(delegationAddress.getDelegateHes());
@@ -515,15 +511,12 @@ public class StakingService {
             lists.add(byAddressResp);
         }
         /** 统计总数 */
-        Page<?> page = new Page<>(req.getPageNo(), req.getPageSize());
-        page.setTotal(delegationAddresses.getTotal());
         RespPage<DelegationListByAddressResp> respPage = new RespPage<>();
         respPage.init(page, lists);
         return respPage;
     }
 
     public RespPage<LockedStakingListResp> lockedStakingList(LockedStakingListReq req) {
-        PageHelper.startPage(req.getPageNo(), req.getPageSize());
         RespPage<LockedStakingListResp> respPage = new RespPage<>();
         List<LockedStakingListResp> lists = new LinkedList<>();
         NodeExample nodeExample = new NodeExample();
@@ -534,12 +527,12 @@ public class StakingService {
         if (StringUtils.isNotBlank(req.getKey())) {
             criteria.andNodeNameLike("%" + req.getKey() + "%");
         }
-        Page<Node> stakingPage = customNodeMapper.selectListByExample(nodeExample);
-
+        Page<Node> page = new Page<>(req.getPageNo(), req.getPageSize());
+        IPage<Node> stakingPage = customNodeMapper.selectListByExample(page, nodeExample);
         /** 查询出块节点 */
         //NetworkStat networkStatRedis = this.statisticCacheService.getNetworkStatCache();
         int i = (req.getPageNo() - 1) * req.getPageSize();
-        for (Node node : stakingPage) {
+        for (Node node : stakingPage.getRecords()) {
             LockedStakingListResp lockedStakingListResp = new LockedStakingListResp();
             BeanUtils.copyProperties(node, lockedStakingListResp);
             lockedStakingListResp.setBlockQty(node.getStatBlockQty());
@@ -572,8 +565,6 @@ public class StakingService {
             lists.add(lockedStakingListResp);
             i++;
         }
-        Page<?> page = new Page<>(req.getPageNo(), req.getPageSize());
-        page.setTotal(stakingPage.getTotal());
         respPage.init(page, lists);
         return respPage;
     }
