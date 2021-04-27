@@ -48,7 +48,7 @@ public class SqlInterceptor extends AbstractSqlParserHandler implements Intercep
         try {
             obj = invocation.proceed();
         } catch (Exception e) {
-            log.error("异常SQL:类型为{},路径为{},语句为{}", sqlCommandType, id, showSql(configuration, boundSql));
+            log.error("异常SQL:类型为{},路径为{},语句为{};", sqlCommandType, id, showSql(configuration, boundSql));
             throw e;
         }
         return obj;
