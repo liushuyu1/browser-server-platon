@@ -150,12 +150,10 @@ public class ErcTokenUpdateTask {
      * @date 2021/1/18
      */
     @Scheduled(cron = "0 */5 * * * ?")
-    public void cronUpdateTokenTotalSupply() {
+    public void totalUpdateTokenTotalSupply() {
         lock.lock();
         try {
-            log.error("=======token的总供应量全量更新开始===========");
             this.updateTokenTotalSupply();
-            log.error("=======token的总供应量全量更新结束===========");
         } catch (Exception e) {
             log.error("全量更新token的总供应量异常", e);
         } finally {
@@ -271,13 +269,11 @@ public class ErcTokenUpdateTask {
      * @date 2021/2/1
      */
     @Scheduled(cron = "0 */1 * * * ?")
-    public void cronIncrementUpdateTokenHolderBalance() {
+    public void incrementUpdateTokenHolderBalance() {
         if (tokenHolderLock.tryLock()) {
             try {
-                log.error("=======更新token持有者余额增量更新开始===========");
                 incrementUpdateTokenHolderBalance(esErc20TxRepository, ErcTypeEnum.ERC20, this.getErc20TxSeq());
                 incrementUpdateTokenHolderBalance(esErc721TxRepository, ErcTypeEnum.ERC721, this.getErc721TxSeq());
-                log.error("=======更新token持有者余额增量更新结束===========");
             } catch (Exception e) {
                 log.error("增量更新token持有者余额异常", e);
             } finally {
@@ -374,12 +370,11 @@ public class ErcTokenUpdateTask {
      * 每天00:00:00运行一次
      */
     @Scheduled(cron = "0 0 0 * * ?")
-    public void updateTokenHolderBalance() {
+    public void totalUpdateTokenHolderBalance() {
         // 只有程序正常运行才执行任务
         if (!AppStatusUtil.isRunning()) {
             return;
         }
-        log.error("=======更新token持有者余额全量更新开始===========");
         try {
             tokenHolderLock.lock();
             // 分页更新holder的balance
@@ -429,7 +424,6 @@ public class ErcTokenUpdateTask {
         } finally {
             tokenHolderLock.unlock();
         }
-        log.error("=======更新token持有者余额全量更新结束===========");
     }
 
     /**
@@ -442,12 +436,10 @@ public class ErcTokenUpdateTask {
      * @date 2021/4/17
      */
     @Scheduled(cron = "0 0 1 */1 * ?")
-    public void updateTokenInventory() {
+    public void totalUpdateTokenInventory() {
         tokenInventoryLock.lock();
         try {
-            log.error("=======更新token库存信息全量更新开始===========");
             updateTokenInventory(0);
-            log.error("=======更新token库存信息全量更新结束===========");
         } catch (Exception e) {
             log.error("更新token库存信息", e);
         } finally {
@@ -525,7 +517,7 @@ public class ErcTokenUpdateTask {
                                     log.error(StrUtil.format("请求TokenURI异常,当前标识为:{},token_address：{},token_id:{},tokenURI:{},请求结果为:{}", finalPage, inventory.getTokenAddress(), inventory.getTokenId(), tokenURI, resp), e);
                                 }
                             } else {
-                                log.error("请求TokenURI为空,当前标识为:{},token_address：{},token_id:{},tokenURI:{}", finalPage, inventory.getTokenAddress(), inventory.getTokenId(), tokenURI);
+                                log.error("请求TokenURI为空,当前标识为:{},token_address：{},token_id:{}", finalPage, inventory.getTokenAddress(), inventory.getTokenId());
                             }
                         } catch (Exception e) {
                             log.error(StrUtil.format("全量更新token库存信息异常,当前标识为:{},token_address：{},token_id:{},tokenURI:{}", finalPage, inventory.getTokenAddress(), inventory.getTokenId(), tokenURI), e);
@@ -555,12 +547,10 @@ public class ErcTokenUpdateTask {
      * @date 2021/2/1
      */
     @Scheduled(cron = "0 */1 * * * ?")
-    public void cronIncrementUpdateTokenInventory() {
+    public void incrementUpdateTokenInventory() {
         if (tokenInventoryLock.tryLock()) {
             try {
-                log.error("=======更新token库存信息增量更新开始===========");
                 cronIncrementUpdateTokenInventory(tokenInventoryPage.intValue());
-                log.error("=======更新token库存信息增量更新结束===========");
             } catch (Exception e) {
                 log.error("增量更新token库存信息异常", e);
             } finally {
@@ -636,7 +626,7 @@ public class ErcTokenUpdateTask {
                                 log.error(StrUtil.format("请求TokenURI异常,当前标识为:{},token_address:{},token_id:{},tokenURI:{},请求结果为:{}", pageNum, inventory.getTokenAddress(), inventory.getTokenId(), tokenURI, resp), e);
                             }
                         } else {
-                            log.error("请求TokenURI为空,当前标识为:{},token_address：{},token_id:{},tokenURI:{}", pageNum, inventory.getTokenAddress(), inventory.getTokenId(), tokenURI);
+                            log.error("请求TokenURI为空,当前标识为:{},token_address：{},token_id:{}", pageNum, inventory.getTokenAddress(), inventory.getTokenId());
                         }
                     } catch (Exception e) {
                         log.error(StrUtil.format("增量更新token库存信息异常,当前标识为:{},token_address：{},token_id:{},tokenURI:{}", pageNum, inventory.getTokenAddress(), inventory.getTokenId(), tokenURI), e);
