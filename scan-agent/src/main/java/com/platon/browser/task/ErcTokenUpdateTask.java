@@ -153,7 +153,6 @@ public class ErcTokenUpdateTask {
     public void cronUpdateTokenTotalSupply() {
         lock.lock();
         try {
-            CommonUtil.putTraceId();
             log.error("=======token的总供应量全量更新开始===========");
             this.updateTokenTotalSupply();
             log.error("=======token的总供应量全量更新结束===========");
@@ -161,7 +160,6 @@ public class ErcTokenUpdateTask {
             log.error("全量更新token的总供应量异常", e);
         } finally {
             lock.unlock();
-            CommonUtil.removeTraceId();
         }
     }
 
@@ -276,7 +274,6 @@ public class ErcTokenUpdateTask {
     public void cronIncrementUpdateTokenHolderBalance() {
         if (tokenHolderLock.tryLock()) {
             try {
-                CommonUtil.putTraceId();
                 log.error("=======更新token持有者余额增量更新开始===========");
                 incrementUpdateTokenHolderBalance(esErc20TxRepository, ErcTypeEnum.ERC20, this.getErc20TxSeq());
                 incrementUpdateTokenHolderBalance(esErc721TxRepository, ErcTypeEnum.ERC721, this.getErc721TxSeq());
@@ -285,7 +282,6 @@ public class ErcTokenUpdateTask {
                 log.error("增量更新token持有者余额异常", e);
             } finally {
                 tokenHolderLock.unlock();
-                CommonUtil.removeTraceId();
             }
         } else {
             log.error("本次增量更新token持有者余额抢不到锁,erc20TxSeq:{},erc721TxSeq:{}", erc20TxSeq, erc721TxSeq);
@@ -383,7 +379,6 @@ public class ErcTokenUpdateTask {
         if (!AppStatusUtil.isRunning()) {
             return;
         }
-        CommonUtil.putTraceId();
         log.error("=======更新token持有者余额全量更新开始===========");
         try {
             tokenHolderLock.lock();
@@ -435,7 +430,6 @@ public class ErcTokenUpdateTask {
             tokenHolderLock.unlock();
         }
         log.error("=======更新token持有者余额全量更新结束===========");
-        CommonUtil.removeTraceId();
     }
 
     /**
@@ -451,7 +445,6 @@ public class ErcTokenUpdateTask {
     public void updateTokenInventory() {
         tokenInventoryLock.lock();
         try {
-            CommonUtil.putTraceId();
             log.error("=======更新token库存信息全量更新开始===========");
             updateTokenInventory(0);
             log.error("=======更新token库存信息全量更新结束===========");
@@ -459,7 +452,6 @@ public class ErcTokenUpdateTask {
             log.error("更新token库存信息", e);
         } finally {
             tokenInventoryLock.unlock();
-            CommonUtil.removeTraceId();
         }
     }
 
@@ -566,7 +558,6 @@ public class ErcTokenUpdateTask {
     public void cronIncrementUpdateTokenInventory() {
         if (tokenInventoryLock.tryLock()) {
             try {
-                CommonUtil.putTraceId();
                 log.error("=======更新token库存信息增量更新开始===========");
                 cronIncrementUpdateTokenInventory(tokenInventoryPage.intValue());
                 log.error("=======更新token库存信息增量更新结束===========");
@@ -574,7 +565,6 @@ public class ErcTokenUpdateTask {
                 log.error("增量更新token库存信息异常", e);
             } finally {
                 tokenInventoryLock.unlock();
-                CommonUtil.removeTraceId();
             }
         } else {
             log.error("该次token库存增量更新抢不到锁，增量更新的标记为{}", tokenInventoryPage);
